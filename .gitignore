@@ -20,6 +20,8 @@ instance/
 *.swp
 *.swo
 
+static/uploads/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,23 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Server Error{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-5">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="campus-glass-card p-4 p-md-5 text-center">
+            <div class="mb-4">
+                <i class="fas fa-server fa-4x" style="color: #FF1744;"></i>
+            </div>
+            <h1 class="display-1 fw-bold" style="color: #FF1744;">500</h1>
+            <h2 class="h4 mb-3">Server Error</h2>
+            <p class="text-white-50 mb-4">
+                Something went wrong on our end. Please try again later.
+            </p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-campus-accent">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

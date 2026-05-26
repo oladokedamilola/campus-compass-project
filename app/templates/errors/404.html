@@ -1,0 +1,23 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-5">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="campus-glass-card p-4 p-md-5 text-center">
+            <div class="mb-4">
+                <i class="fas fa-map-frown fa-4x" style="color: var(--campus-accent);"></i>
+            </div>
+            <h1 class="display-1 fw-bold campus-text-gradient">404</h1>
+            <h2 class="h4 mb-3">Page Not Found</h2>
+            <p class="text-white-50 mb-4">
+                Oops! The page you're looking for doesn't exist or has been moved.
+            </p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-campus-accent">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

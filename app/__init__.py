@@ -3,7 +3,7 @@ Campus Compass - Flask Application Factory
 Initializes the app, database, login manager, and registers blueprints
 """
 
-from flask import Flask, send_from_directory, render_template
+from flask import Flask, send_from_directory, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
@@ -89,6 +89,24 @@ def create_app():
     def offline():
         """Offline fallback page for PWA"""
         return render_template('offline.html')
+
+
+    # Error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return redirect(url_for('auth.login_page'))
     
     # Create database tables if they don't exist (for first run)
     with app.app_context():
