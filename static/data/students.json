@@ -1,0 +1,170 @@
+{
+  "students": [
+    {
+      "matric_number": "202167921",
+      "full_name": "Adebayo Olamide Samuel",
+      "email": "olamide.adebayo@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Computer Science",
+      "phone": "08012345678",
+      "year_of_admission": 2021,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202245678",
+      "full_name": "Adekunle Grace Temilade",
+      "email": "grace.adekunle@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Computer Science",
+      "phone": "08023456789",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202189234",
+      "full_name": "Okafor Chukwudi Emmanuel",
+      "email": "chukwudi.okafor@lasu.edu.ng",
+      "faculty": "Engineering",
+      "department": "Mechanical Engineering",
+      "phone": "08034567890",
+      "year_of_admission": 2021,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202234567",
+      "full_name": "Adewale Ifeoluwa Mary",
+      "email": "ifeoluwa.adewale@lasu.edu.ng",
+      "faculty": "Management Sciences",
+      "department": "Business Administration",
+      "phone": "08045678901",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202278901",
+      "full_name": "Balogun Abdulmalik Oluwaseun",
+      "email": "abdulmalik.balogun@lasu.edu.ng",
+      "faculty": "Social Sciences",
+      "department": "Economics",
+      "phone": "08056789012",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202112345",
+      "full_name": "Eze Ngozi Faith",
+      "email": "ngozi.eze@lasu.edu.ng",
+      "faculty": "Arts",
+      "department": "English Language",
+      "phone": "08067890123",
+      "year_of_admission": 2021,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202256789",
+      "full_name": "Ogunleye David Oluwatobi",
+      "email": "david.ogunleye@lasu.edu.ng",
+      "faculty": "Science",
+      "department": "Physics",
+      "phone": "08078901234",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202190123",
+      "full_name": "Uche Jennifer Chiamaka",
+      "email": "jennifer.uche@lasu.edu.ng",
+      "faculty": "Law",
+      "department": "Law",
+      "phone": "08089012345",
+      "year_of_admission": 2021,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202223456",
+      "full_name": "Akinola Victor Oluwasegun",
+      "email": "victor.akinola@lasu.edu.ng",
+      "faculty": "Education",
+      "department": "Educational Management",
+      "phone": "08090123456",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202267890",
+      "full_name": "Olayinka Fatima Omolara",
+      "email": "fatima.olayinka@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Computer Science",
+      "phone": "08101234567",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202178901",
+      "full_name": "Obi Chinedu Michael",
+      "email": "chinedu.obi@lasu.edu.ng",
+      "faculty": "Engineering",
+      "department": "Electrical Engineering",
+      "phone": "08112345678",
+      "year_of_admission": 2021,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202245679",
+      "full_name": "Adebayo Habeebat Abiodun",
+      "email": "habeebat.adebayo@lasu.edu.ng",
+      "faculty": "Social Sciences",
+      "department": "Political Science",
+      "phone": "08123456789",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202313456",
+      "full_name": "Okonkwo Chinonso Precious",
+      "email": "chinonso.okonkwo@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Cyber Security",
+      "phone": "08134567890",
+      "year_of_admission": 2023,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202345678",
+      "full_name": "Adebayo Ademola Johnson",
+      "email": "ademola.adebayo@lasu.edu.ng",
+      "faculty": "Management Sciences",
+      "department": "Accounting",
+      "phone": "08145678901",
+      "year_of_admission": 2023,
+      "is_active": true,
+      "has_registered": false
+    },
+    {
+      "matric_number": "202156789",
+      "full_name": "Gbadegesin Oluwaseun Michael",
+      "email": "seun.gbadegesin@lasu.edu.ng",
+      "faculty": "Science",
+      "department": "Mathematics",
+      "phone": "08156789012",
+      "year_of_admission": 2021,
+      "is_active": false,
+      "has_registered": false,
+      "status_note": "Graduated"
+    }
+  ]
+}

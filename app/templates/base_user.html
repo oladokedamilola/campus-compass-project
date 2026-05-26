@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0D0D0D">
+    <meta name="description" content="Campus Compass - Navigation app for LASU Ojo Campus">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Campus Compass">
+    <title>Campus Compass - {% block title %}{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Fonts -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/icons/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/icons/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/icons/favicon-32x32.png') }}">
+
+    <!-- Apple Touch Icon (iOS) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/icons/apple-touch-icon.png') }}">
+
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/icons/icon-192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='images/icons/icon-512.png') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="user-body">
+    <!-- General Preloader -->
+    <div id="general-preloader" class="preloader">
+        <div class="preloader-container">
+            <div class="compass-needle">
+                <div class="needle-center"></div>
+                <div class="needle-north"></div>
+                <div class="needle-south"></div>
+            </div>
+            <div class="compass-orbits">
+                <div class="orbit-dot dot-1"></div>
+                <div class="orbit-dot dot-2"></div>
+                <div class="orbit-dot dot-3"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Flash Messages Container -->
+    <div id="flash-container" class="flash-container"></div>
+    
+    <!-- Sidebar Overlay (Mobile/Tablet only) -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="user-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fas fa-compass"></i>
+                <span>Campus Compass</span>
+            </div>
+            <!-- Close button - hidden on desktop, visible on mobile/tablet when sidebar is open -->
+            <button id="close-sidebar-btn" class="close-sidebar-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- User Profile Section -->
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                {% if current_user.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}" 
+                         alt="Profile" 
+                         class="avatar-img">
+                {% else %}
+                    <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <h4>{{ current_user.full_name.split()[0] if current_user.full_name else 'User' }}</h4>
+                <span class="user-badge {{ current_user.user_type }}">
+                    <i class="fas {% if current_user.is_admin() %}fa-shield-alt{% else %}fa-graduation-cap{% endif %}"></i>
+                    {{ current_user.user_type|capitalize }}
+                </span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('map.index') }}" class="sidebar-link {% if request.endpoint == 'map.index' %}active{% endif %}">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Map</span>
+            </a>
+            <a href="{{ url_for('main.locations') }}" class="sidebar-link {% if request.endpoint == 'main.locations' %}active{% endif %}">
+                <i class="fas fa-building"></i>
+                <span>All Locations</span>
+            </a>
+            <a href="{{ url_for('dashboard.favorites') }}" class="sidebar-link {% if request.endpoint == 'dashboard.favorites' %}active{% endif %}">
+                <i class="fas fa-heart"></i>
+                <span>Favorites</span>
+            </a>
+            <a href="{{ url_for('dashboard.profile') }}" class="sidebar-link {% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            
+            {% if current_user.is_admin() %}
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">
+                <span>Administration</span>
+            </div>
+            <a href="{{ url_for('admin.index') }}" class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">
+                <i class="fas fa-crown"></i>
+                <span>Admin Dashboard</span>
+            </a>
+            <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link">
+                <i class="fas fa-users"></i>
+                <span>Manage Users</span>
+            </a>
+            <a href="{{ url_for('admin.campus_data') }}" class="sidebar-link">
+                <i class="fas fa-building"></i>
+                <span>Campus Data Editor</span>
+            </a>
+            {% endif %}
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-link logout-link">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="user-main">
+        <div class="user-topbar">
+            <!-- Toggle button - visible on mobile/tablet when sidebar is collapsed -->
+            <button id="toggle-sidebar-btn" class="toggle-sidebar-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-title">
+                {% block topbar_title %}Dashboard{% endblock %}
+            </div>
+            <div class="topbar-right">
+                <span class="topbar-greeting">
+                    <i class="fas fa-smile-wink"></i>
+                    <span>Hello, {{ current_user.full_name.split()[0] }}</span>
+                </span>
+            </div>
+        </div>
+        
+        <div class="user-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    
+    <!-- Flash messages from Flask to JavaScript -->
+    <script>
+        const flashedMessages = [
+            {% for message in get_flashed_messages(with_categories=true) %}
+                { category: '{{ message[0] }}', message: '{{ message[1]|safe }}' }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+    </script>
+    
+    <!-- PWA Installation & Offline Detection -->
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    
+    <!-- Sidebar Toggle JavaScript - COMPLETE FIX -->
+    <script>
+        (function() {
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+            const mainContent = document.querySelector('.user-main');
+            
+            function isDesktop() {
+                return window.innerWidth >= 1025;
+            }
+            
+            function isTablet() {
+                return window.innerWidth >= 769 && window.innerWidth <= 1024;
+            }
+            
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+            
+            function updateMainContentMargin() {
+    if (!mainContent) return;
+    
+    if (isDesktop()) {
+        mainContent.style.marginLeft = '280px';
+    } else if (isTablet()) {
+        if (sidebar && sidebar.classList.contains('open')) {
+            mainContent.style.marginLeft = '280px';
+        } else {
+            mainContent.style.marginLeft = '80px';
+        }
+    } else if (isMobile()) {
+        mainContent.style.marginLeft = '0px';
+    }
+}
+            
+            function updateButtons() {
+                if (isDesktop()) {
+                    // Desktop: hide both toggle and close buttons
+                    if (toggleSidebarBtn) toggleSidebarBtn.style.display = 'none';
+                    if (closeSidebarBtn) closeSidebarBtn.style.display = 'none';
+                } else if (isTablet() || isMobile()) {
+                    // Tablet/Mobile: show toggle button when sidebar is closed, show close button when open
+                    const isOpen = sidebar && sidebar.classList.contains('open');
+                    if (toggleSidebarBtn) {
+                        toggleSidebarBtn.style.display = isOpen ? 'none' : 'flex';
+                    }
+                    if (closeSidebarBtn) {
+                        closeSidebarBtn.style.display = isOpen ? 'flex' : 'none';
+                    }
+                }
+            }
+            
+            function openSidebar() {
+                if (!sidebar) return;
+                
+                sidebar.classList.add('open');
+                if (sidebarOverlay) sidebarOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                if (isTablet()) {
+                    updateMainContentMargin();
+                }
+                updateButtons();
+            }
+            
+            function closeSidebar() {
+                if (!sidebar) return;
+                
+                sidebar.classList.remove('open');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                if (isTablet()) {
+                    updateMainContentMargin();
+                }
+                updateButtons();
+            }
+            
+            // Toggle button click handler
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (sidebar && sidebar.classList.contains('open')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+            }
+            
+            // Close button handler
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeSidebar();
+                });
+            }
+            
+            // Overlay click handler
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    closeSidebar();
+                });
+            }
+            
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (isDesktop()) {
+                    if (sidebar) {
+                        sidebar.classList.remove('open');
+                        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                    updateMainContentMargin();
+                    updateButtons();
+                } else if (isTablet()) {
+                    // On tablet, ensure sidebar state is preserved but update margins
+                    updateMainContentMargin();
+                    updateButtons();
+                } else if (isMobile()) {
+                    if (sidebar && sidebar.classList.contains('open')) {
+                        // Keep open on mobile resize
+                    } else {
+                        updateButtons();
+                    }
+                    updateMainContentMargin();
+                }
+            });
+            
+            // Initial setup
+            if (isDesktop()) {
+                if (sidebar) sidebar.classList.remove('open');
+                updateMainContentMargin();
+                updateButtons();
+            } else if (isTablet()) {
+                if (sidebar) sidebar.classList.remove('open');
+                updateMainContentMargin();
+                updateButtons();
+            } else if (isMobile()) {
+                if (sidebar) sidebar.classList.remove('open');
+                updateMainContentMargin();
+                updateButtons();
+            }
+        })();
+    </script>
+    
+    <!-- Fix for avatar images on all pages -->
+    <script>
+        (function() {
+            function fixAvatarImages() {
+                const avatars = document.querySelectorAll('.user-avatar img');
+                avatars.forEach(img => {
+                    img.style.width = '70px';
+                    img.style.height = '70px';
+                    img.style.maxWidth = '70px';
+                    img.style.maxHeight = '70px';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                });
+            }
+            
+            fixAvatarImages();
+            
+            if (typeof MutationObserver !== 'undefined') {
+                const observer = new MutationObserver(function() {
+                    fixAvatarImages();
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

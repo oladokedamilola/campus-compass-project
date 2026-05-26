@@ -1,0 +1,549 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Complete Registration{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-5">
+    <div class="col-12 col-md-8 col-lg-6 mt-5">
+        <div class="campus-glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <i class="fas fa-user-check fa-3x" style="color: var(--campus-accent);"></i>
+                </div>
+                <h1 class="h3 fw-bold campus-text-gradient">Complete Registration</h1>
+                <p class="text-white-50 mt-2">Create your password to activate your account</p>
+            </div>
+            
+            <form id="registerForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Password Field -->
+                <div class="mb-2">
+                    <label for="password" class="form-label text-white">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
+                            <i class="fas fa-lock" style="color: var(--campus-gray-500);"></i>
+                        </span>
+                        <input type="password" class="form-control form-control-campus border-start-0" 
+                               id="password" name="password" placeholder="Min. 6 characters" required>
+                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" style="background: transparent; border-color: var(--campus-gray-600);">
+                            <i class="fas fa-eye-slash" style="color: var(--campus-gray-500);"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Password Strength Indicator (Directly under password field) -->
+                <div id="passwordStrengthContainer" class="strength-container mb-2" style="display: none;">
+                    <div class="strength-bar">
+                        <div class="strength-progress" id="strengthProgress"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                </div>
+                
+                <!-- Password Constraints Panel (Slides down when typing) -->
+                <div id="passwordConstraints" class="password-constraints-panel" style="display: none;">
+                    <div class="constraints-content">
+                        <div class="constraint-item" id="constraint-length">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>At least 6 characters</span>
+                        </div>
+                        <div class="constraint-item" id="constraint-uppercase">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>At least one uppercase letter (A-Z)</span>
+                        </div>
+                        <div class="constraint-item" id="constraint-number">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>At least one number (0-9)</span>
+                        </div>
+                        <div class="constraint-item" id="constraint-special">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>At least one special character (!@#$%^&*)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Confirm Password Field -->
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label text-white">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
+                            <i class="fas fa-check-circle" style="color: var(--campus-gray-500);"></i>
+                        </span>
+                        <input type="password" class="form-control form-control-campus border-start-0" 
+                               id="confirm_password" name="confirm_password" placeholder="••••••" required>
+                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirm_password" style="background: transparent; border-color: var(--campus-gray-600);">
+                            <i class="fas fa-eye-slash" style="color: var(--campus-gray-500);"></i>
+                        </button>
+                    </div>
+                    <div id="passwordMatch" class="small mt-1"></div>
+                </div>
+                
+                <!-- Phone Number Field with Validation -->
+                <div class="mb-4">
+                    <label for="phone" class="form-label text-white">
+                        Phone Number 
+                        <span class="text-white-50 small">(Optional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
+                            <i class="fas fa-phone" style="color: var(--campus-gray-500);"></i>
+                        </span>
+                        <input type="tel" class="form-control form-control-campus border-start-0" 
+                               id="phone" name="phone" placeholder="08012345678">
+                    </div>
+                    <div id="phoneValidation" class="small mt-1"></div>
+                    <small class="text-white-50 mt-1 d-block">
+                        <i class="fas fa-info-circle"></i> Format: 080XXXXXXXX (11 digits) or +234XXXXXXXXXX
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn btn-campus-accent w-100 py-3 fw-bold" id="registerBtn">
+                    <i class="fas fa-user-plus me-2"></i>Create Account
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <p class="text-white-50 mb-0">
+                    Already have an account? 
+                    <a href="{{ url_for('auth.login_page') }}" class="text-decoration-none fw-bold" style="color: var(--campus-accent);">
+                        Sign In
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Password Constraints Panel */
+.password-constraints-panel {
+    background: rgba(33, 33, 33, 0.95);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-left: 3px solid var(--campus-accent);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.constraints-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.constraint-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--campus-gray-400);
+    transition: all 0.2s ease;
+}
+
+.constraint-item i {
+    width: 16px;
+    font-size: 12px;
+}
+
+.constraint-item.valid {
+    color: #00E676;
+}
+
+.constraint-item.valid i {
+    color: #00E676;
+}
+
+.constraint-item.valid i::before {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+
+/* Password Strength Indicator */
+.strength-container {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.strength-bar {
+    height: 4px;
+    background: var(--campus-gray-700);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.strength-progress {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background 0.3s ease;
+    border-radius: 4px;
+}
+
+.strength-text {
+    font-size: 11px;
+    margin-top: 6px;
+    text-align: right;
+    font-weight: 500;
+}
+
+/* Toggle password button */
+.toggle-password {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.toggle-password:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--campus-accent);
+}
+
+.toggle-password:hover i {
+    color: var(--campus-accent) !important;
+}
+
+/* Phone validation styles */
+#phoneValidation {
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+#phoneValidation.valid {
+    color: #00E676;
+}
+
+#phoneValidation.invalid {
+    color: #FF1744;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Phone number validation function (Nigerian format)
+function validatePhoneNumber(phone) {
+    if (!phone || phone.trim() === '') {
+        return { valid: true, message: '' }; // Optional field, empty is valid
+    }
+    
+    // Remove spaces, dashes, and parentheses
+    let cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    
+    // Check for Nigerian phone number patterns
+    // Pattern 1: 080XXXXXXXX (11 digits starting with 0)
+    // Pattern 2: 070XXXXXXXX (11 digits starting with 0)
+    // Pattern 3: 081XXXXXXXX (11 digits starting with 0)
+    // Pattern 4: 090XXXXXXXX (11 digits starting with 0)
+    // Pattern 5: +234XXXXXXXXXX (13-14 digits with +234 country code)
+    // Pattern 6: 234XXXXXXXXXX (13 digits without +)
+    
+    const patterns = [
+        /^0[789][01]\d{8}$/,      // 080, 070, 081, 090, 091 - 11 digits
+        /^234[789][01]\d{8}$/,    // 23480... - 13 digits
+        /^\+234[789][01]\d{8}$/   // +23480... - 14 digits
+    ];
+    
+    let isValid = false;
+    for (const pattern of patterns) {
+        if (pattern.test(cleaned)) {
+            isValid = true;
+            break;
+        }
+    }
+    
+    if (isValid) {
+        return { valid: true, message: '✓ Valid phone number' };
+    } else {
+        return { 
+            valid: false, 
+            message: '❌ Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)' 
+        };
+    }
+}
+
+// Real-time phone validation
+const phoneInput = document.getElementById('phone');
+const phoneValidation = document.getElementById('phoneValidation');
+
+phoneInput.addEventListener('input', () => {
+    const phone = phoneInput.value.trim();
+    const result = validatePhoneNumber(phone);
+    
+    if (phone === '') {
+        phoneValidation.innerHTML = '';
+        phoneValidation.className = 'small mt-1';
+    } else if (result.valid) {
+        phoneValidation.innerHTML = `<i class="fas fa-check-circle"></i> ${result.message}`;
+        phoneValidation.className = 'small mt-1 valid';
+    } else {
+        phoneValidation.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${result.message}`;
+        phoneValidation.className = 'small mt-1 invalid';
+    }
+});
+
+// Password strength checker with visual bar
+function checkPasswordStrength(password) {
+    let score = 0;
+    let strengthLevel = '';
+    let strengthColor = '';
+    let strengthPercent = 0;
+    
+    // Criteria checks
+    const hasLength = password.length >= 6;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    
+    if (hasLength) score++;
+    if (hasUppercase) score++;
+    if (hasNumber) score++;
+    if (hasSpecial) score++;
+    
+    // Calculate percentage and level
+    if (password.length === 0) {
+        strengthPercent = 0;
+        strengthLevel = '';
+        strengthColor = '';
+    } else if (score <= 1) {
+        strengthPercent = 25;
+        strengthLevel = 'Weak';
+        strengthColor = '#FF1744';
+    } else if (score <= 2) {
+        strengthPercent = 50;
+        strengthLevel = 'Fair';
+        strengthColor = '#FFD600';
+    } else if (score <= 3) {
+        strengthPercent = 75;
+        strengthLevel = 'Good';
+        strengthColor = '#FFD600';
+    } else {
+        strengthPercent = 100;
+        strengthLevel = 'Strong';
+        strengthColor = '#00E676';
+    }
+    
+    // Update strength bar
+    const progressBar = document.getElementById('strengthProgress');
+    const strengthText = document.getElementById('strengthText');
+    const strengthContainer = document.getElementById('passwordStrengthContainer');
+    
+    if (password.length > 0) {
+        strengthContainer.style.display = 'block';
+        progressBar.style.width = strengthPercent + '%';
+        progressBar.style.background = strengthColor;
+        if (strengthLevel) {
+            strengthText.innerHTML = `<span style="color: ${strengthColor};">🔒 ${strengthLevel} password</span>`;
+        }
+    } else {
+        strengthContainer.style.display = 'none';
+    }
+    
+    return { score, hasLength, hasUppercase, hasNumber, hasSpecial };
+}
+
+// Update constraint items
+function updateConstraints(password) {
+    const constraints = {
+        length: password.length >= 6,
+        uppercase: /[A-Z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[^A-Za-z0-9]/.test(password)
+    };
+    
+    const lengthItem = document.getElementById('constraint-length');
+    const uppercaseItem = document.getElementById('constraint-uppercase');
+    const numberItem = document.getElementById('constraint-number');
+    const specialItem = document.getElementById('constraint-special');
+    
+    if (constraints.length) {
+        lengthItem.classList.add('valid');
+        lengthItem.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        lengthItem.classList.remove('valid');
+        lengthItem.querySelector('i').className = 'fas fa-circle-notch';
+    }
+    
+    if (constraints.uppercase) {
+        uppercaseItem.classList.add('valid');
+        uppercaseItem.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        uppercaseItem.classList.remove('valid');
+        uppercaseItem.querySelector('i').className = 'fas fa-circle-notch';
+    }
+    
+    if (constraints.number) {
+        numberItem.classList.add('valid');
+        numberItem.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        numberItem.classList.remove('valid');
+        numberItem.querySelector('i').className = 'fas fa-circle-notch';
+    }
+    
+    if (constraints.special) {
+        specialItem.classList.add('valid');
+        specialItem.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        specialItem.classList.remove('valid');
+        specialItem.querySelector('i').className = 'fas fa-circle-notch';
+    }
+}
+
+// Check password match
+function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    const matchDiv = document.getElementById('passwordMatch');
+    
+    if (confirm.length === 0) {
+        matchDiv.innerHTML = '';
+        return false;
+    }
+    
+    if (password === confirm) {
+        matchDiv.innerHTML = '<span style="color: #00E676;"><i class="fas fa-check-circle"></i> Passwords match</span>';
+        return true;
+    } else {
+        matchDiv.innerHTML = '<span style="color: #FF1744;"><i class="fas fa-times-circle"></i> Passwords do not match</span>';
+        return false;
+    }
+}
+
+// Toggle password visibility
+function setupPasswordToggle() {
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        });
+    });
+}
+
+// Show/hide password constraints panel
+const passwordInput = document.getElementById('password');
+const constraintsPanel = document.getElementById('passwordConstraints');
+let blurTimeout;
+
+passwordInput.addEventListener('focus', () => {
+    clearTimeout(blurTimeout);
+    constraintsPanel.style.display = 'block';
+});
+
+passwordInput.addEventListener('blur', () => {
+    blurTimeout = setTimeout(() => {
+        constraintsPanel.style.display = 'none';
+    }, 200);
+});
+
+// Real-time validation
+passwordInput.addEventListener('input', () => {
+    const password = passwordInput.value;
+    checkPasswordStrength(password);
+    updateConstraints(password);
+    checkPasswordMatch();
+});
+
+document.getElementById('confirm_password').addEventListener('input', checkPasswordMatch);
+
+// Form submission
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const phone = document.getElementById('phone').value.trim();
+    
+    // Validate phone number if provided
+    if (phone) {
+        const phoneResult = validatePhoneNumber(phone);
+        if (!phoneResult.valid) {
+            notify.error(phoneResult.message);
+            phoneInput.focus();
+            return;
+        }
+    }
+    
+    // Client-side validation
+    if (password.length < 6) {
+        notify.error('Password must be at least 6 characters long');
+        passwordInput.focus();
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        notify.error('Passwords do not match');
+        document.getElementById('confirm_password').focus();
+        return;
+    }
+    
+    const btn = document.getElementById('registerBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating account...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+            },
+            body: JSON.stringify({
+                password: password,
+                confirm_password: confirmPassword,
+                phone: phone
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            notify.success(result.message);
+            setTimeout(() => {
+                window.location.href = result.redirect;
+            }, 500);
+        } else {
+            notify.error(result.message);
+            if (result.redirect) {
+                setTimeout(() => {
+                    window.location.href = result.redirect;
+                }, 2000);
+            }
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        notify.error('Network error. Please try again.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+
+// Initialize
+setupPasswordToggle();
+</script>
+{% endblock %}

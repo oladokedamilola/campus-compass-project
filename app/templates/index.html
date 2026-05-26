@@ -1,0 +1,955 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container-standard">
+        <div class="row align-items-center" style="min-height: auto;">
+            <div class="col-12 col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
+                <div class="hero-badge mb-4">
+                    <span class="campus-accent-bg px-3 py-1 rounded-pill small">
+                        <i class="fas fa-map-marked-alt me-1"></i> LASU Ojo Campus
+                    </span>
+                </div>
+                <h1 class="display-3 fw-bold mb-4">
+                    Find Your Way Around<br>
+                    <span class="campus-text-gradient">LASU Campus</span>
+                </h1>
+                <p class="lead text-white-50 mb-4">
+                    Never get lost again. Campus Compass helps students, staff, and visitors 
+                    navigate the LASU Ojo campus with real-time GPS directions, building search, 
+                    and turn-by-turn guidance.
+                </p>
+                
+                <!-- Authentication-Aware Hero Buttons -->
+                <div class="hero-buttons d-flex gap-3 justify-content-center justify-content-lg-start flex-wrap">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('map.index') }}" class="btn btn-campus-accent px-4 py-3">
+                            <i class="fas fa-map-marked-alt me-2"></i>Open Map
+                        </a>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-campus-outline-light px-4 py-3">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('auth.verify_matric_page') }}" class="btn btn-campus-accent px-4 py-3">
+                            <i class="fas fa-user-plus me-2"></i>Get Started
+                        </a>
+                        <a href="{{ url_for('auth.login_page') }}" class="btn btn-campus-outline-light px-4 py-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Feature Highlights -->
+                <div class="row g-3 mt-5">
+                    <div class="col-12 col-sm-4">
+                        <div class="d-flex align-items-center justify-content-center justify-content-lg-start gap-2">
+                            <i class="fas fa-map-marked-alt fa-lg" style="color: var(--campus-accent);"></i>
+                            <span class="small">Interactive Map</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <div class="d-flex align-items-center justify-content-center justify-content-lg-start gap-2">
+                            <i class="fas fa-location-dot fa-lg" style="color: var(--campus-accent);"></i>
+                            <span class="small">GPS Navigation</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <div class="d-flex align-items-center justify-content-center justify-content-lg-start gap-2">
+                            <i class="fas fa-heart fa-lg" style="color: var(--campus-accent);"></i>
+                            <span class="small">Save Favorites</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-lg-6">
+                <div class="hero-preview position-relative">
+                    <!-- Animated Slideshow Container -->
+                    <div class="campus-glass-card p-2 slideshow-container">
+                        <div class="slideshow">
+                            <div class="slide active" data-slide="0" data-animation="zoom-in">
+                                <div class="slide-image-wrapper">
+                                    <img src="{{ url_for('static', filename='images/hero1.png') }}" 
+                                         alt="Campus Map View" 
+                                         class="img-fluid rounded slide-img"
+                                         onerror="this.onerror=null; this.parentElement.parentElement.classList.add('fallback'); this.parentElement.parentElement.innerHTML='<div class=\'fallback-slide\'><i class=\'fas fa-map-marked-alt\'></i><p>Campus Map Preview</p></div>'">
+                                </div>
+                                <div class="slide-caption">Interactive Campus Map</div>
+                            </div>
+                            <div class="slide" data-slide="1" data-animation="zoom-out">
+                                <div class="slide-image-wrapper">
+                                    <img src="{{ url_for('static', filename='images/hero2.png') }}" 
+                                         alt="Navigation Features" 
+                                         class="img-fluid rounded slide-img"
+                                         onerror="this.onerror=null; this.parentElement.parentElement.classList.add('fallback'); this.parentElement.parentElement.innerHTML='<div class=\'fallback-slide\'><i class=\'fas fa-location-dot\'></i><p>GPS Navigation</p></div>'">
+                                </div>
+                                <div class="slide-caption">Real-time GPS Tracking</div>
+                            </div>
+                            <div class="slide" data-slide="2" data-animation="pan">
+                                <div class="slide-image-wrapper">
+                                    <img src="{{ url_for('static', filename='images/hero3.png') }}" 
+                                         alt="Directions Preview" 
+                                         class="img-fluid rounded slide-img"
+                                         onerror="this.onerror=null; this.parentElement.parentElement.classList.add('fallback'); this.parentElement.parentElement.innerHTML='<div class=\'fallback-slide\'><i class=\'fas fa-directions\'></i><p>Turn-by-Turn Directions</p></div>'">
+                                </div>
+                                <div class="slide-caption">Step-by-Step Guidance</div>
+                            </div>
+                        </div>
+                        <!-- Slideshow Navigation Dots -->
+                        <div class="slideshow-dots">
+                            <span class="dot active" onclick="currentSlide(0)"></span>
+                            <span class="dot" onclick="currentSlide(1)"></span>
+                            <span class="dot" onclick="currentSlide(2)"></span>
+                        </div>
+                        <div class="mockup-overlay">
+                            <div class="mockup-marker">
+                                <i class="fas fa-location-dot"></i>
+                                <span>Live Navigation</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stats Floating Badge -->
+                    <div class="stats-badge campus-glass">
+                        <div class="d-flex gap-3">
+                            <div class="text-center">
+                                <div class="h4 mb-0 fw-bold" style="color: var(--campus-accent);">30+</div>
+                                <small class="text-white-50">Buildings</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h4 mb-0 fw-bold" style="color: var(--campus-accent);">50+</div>
+                                <small class="text-white-50">Paths</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h4 mb-0 fw-bold" style="color: var(--campus-accent);">24/7</div>
+                                <small class="text-white-50">Access</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container-standard">
+        <div class="text-center mb-5">
+            <h2 class="display-6 fw-bold mb-3">Everything You Need to Navigate</h2>
+            <p class="text-white-50">Powerful features designed to help you find your way around campus</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-map-marked-alt fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Interactive Campus Map</h3>
+                    <p class="text-white-50 small mb-0">
+                        View all LASU buildings, lecture halls, administrative offices, and walking paths on a detailed interactive map.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-location-dot fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Real-time GPS Tracking</h3>
+                    <p class="text-white-50 small mb-0">
+                        See your exact location on campus and get turn-by-turn directions to any building or facility.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-search fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Smart Search</h3>
+                    <p class="text-white-50 small mb-0">
+                        Quickly find any building by name — from the Senate Building to your faculty's lecture hall.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-route fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Turn-by-Turn Directions</h3>
+                    <p class="text-white-50 small mb-0">
+                        Get step-by-step walking instructions with landmark-based guidance, not just distances.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-heart fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Save Favorites</h3>
+                    <p class="text-white-50 small mb-0">
+                        Bookmark frequently visited locations for one-tap access whenever you need them.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-4">
+                <div class="campus-glass-card text-center p-4 h-100 feature-card">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-mobile-alt fa-3x" style="color: var(--campus-accent);"></i>
+                    </div>
+                    <h3 class="h5 mb-3">Install as PWA</h3>
+                    <p class="text-white-50 small mb-0">
+                        Install Campus Compass on your phone for offline access and native app experience.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works-section py-5">
+    <div class="container-standard">
+        <div class="text-center mb-5">
+            <h2 class="display-6 fw-bold mb-3">How It Works</h2>
+            <p class="text-white-50">Three simple steps to navigate LASU campus</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <div class="step-card text-center how-it-works-card">
+                    <div class="step-number mx-auto mb-3">1</div>
+                    <i class="fas fa-user-plus fa-2x mb-3" style="color: var(--campus-accent);"></i>
+                    <h4 class="h6 mb-2">Verify Matric Number</h4>
+                    <p class="small text-white-50">Enter your LASU matric number to verify your identity</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="step-card text-center how-it-works-card">
+                    <div class="step-number mx-auto mb-3">2</div>
+                    <i class="fas fa-map-marked-alt fa-2x mb-3" style="color: var(--campus-accent);"></i>
+                    <h4 class="h6 mb-2">Open Map</h4>
+                    <p class="small text-white-50">Access the interactive campus map</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="step-card text-center how-it-works-card">
+                    <div class="step-number mx-auto mb-3">3</div>
+                    <i class="fas fa-location-dot fa-2x mb-3" style="color: var(--campus-accent);"></i>
+                    <h4 class="h6 mb-2">Find & Navigate</h4>
+                    <p class="small text-white-50">Search for any building and get directions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section - Authentication Aware -->
+<section class="cta-section py-5 mb-5">
+    <div class="container-standard">
+        <div class="campus-glass-card text-center p-5 cta-card">
+            <h2 class="h3 mb-3">Ready to Explore LASU Campus?</h2>
+            <p class="text-white-50 mb-4">Join hundreds of students who never get lost anymore</p>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('map.index') }}" class="btn btn-campus-accent px-5 py-3">
+                    <i class="fas fa-map-marked-alt me-2"></i>Open Map Now
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.verify_matric_page') }}" class="btn btn-campus-accent px-5 py-3">
+                    <i class="fas fa-rocket me-2"></i>Get Started Now
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Footer - Authentication Aware -->
+<footer class="footer-section py-4 mt-5">
+    <div class="container-standard">
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="fas fa-compass fa-lg" style="color: var(--campus-accent);"></i>
+                    <span class="fw-bold">Campus Compass</span>
+                </div>
+                <p class="small text-white-50">
+                    Your trusted navigation companion for Lagos State University, Ojo Campus.
+                </p>
+            </div>
+            <div class="col-12 col-md-4">
+                <h6 class="mb-3">Quick Links</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a href="{{ url_for('main.index') }}" class="text-white-50 text-decoration-none">Home</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li class="mb-2"><a href="{{ url_for('map.index') }}" class="text-white-50 text-decoration-none">Map</a></li>
+                        <li class="mb-2"><a href="{{ url_for('dashboard.index') }}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.logout') }}" class="text-white-50 text-decoration-none">Logout</a></li>
+                    {% else %}
+                        <li class="mb-2"><a href="{{ url_for('auth.login_page') }}" class="text-white-50 text-decoration-none">Login</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.verify_matric_page') }}" class="text-white-50 text-decoration-none">Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-12 col-md-4">
+                <h6 class="mb-3">About</h6>
+                <p class="small text-white-50">
+                    A Computer Science project for Lagos State University (LASU).<br>
+                    Designed to help students and visitors navigate campus efficiently.
+                </p>
+            </div>
+        </div>
+        <div class="text-center mt-4 pt-3 border-top border-secondary">
+            <p class="small text-white-50 mb-0">
+                &copy; 2026 Campus Compass | Lagos State University, Ojo Campus
+            </p>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hero Section - Consistent responsive margin */
+.hero-section {
+    position: relative;
+    overflow: hidden;
+    padding-top: 80px;
+    padding-bottom: 20px;
+}
+
+/* Mobile (<= 768px) */
+@media (max-width: 768px) {
+    .hero-section {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+    
+    .hero-section .row {
+        min-height: auto !important;
+    }
+    
+    .hero-badge {
+        margin-top: 0;
+    }
+    
+    .hero-badge span {
+        font-size: 0.7rem;
+        padding: 5px 10px !important;
+    }
+    
+    h1.display-3 {
+        font-size: 2rem !important;
+    }
+    
+    .lead {
+        font-size: 0.9rem !important;
+    }
+    
+    .hero-buttons .btn {
+        padding: 10px 16px !important;
+        font-size: 0.85rem;
+    }
+    
+    .feature-highlights .row {
+        margin-top: 20px;
+    }
+}
+
+/* Tablet (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .hero-section {
+        padding-top: 90px;
+        padding-bottom: 30px;
+    }
+    
+    h1.display-3 {
+        font-size: 2.5rem !important;
+    }
+}
+
+/* Desktop (1025px - 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .hero-section {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+}
+
+/* Desktop Large (> 1440px) */
+@media (min-width: 1441px) {
+    .hero-section {
+        padding-top: 120px;
+        padding-bottom: 60px;
+    }
+}
+
+/* Slideshow Container */
+.slideshow-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 350px;
+}
+
+.slideshow {
+    position: relative;
+    width: 100%;
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.slide {
+    display: none;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.slide.active {
+    display: block;
+}
+
+/* Image Wrapper for Animation */
+.slide-image-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.slide-img {
+    width: 100%;
+    height: auto;
+    min-height: 280px;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation: Zoom In */
+.slide.active[data-animation="zoom-in"] .slide-img {
+    animation: zoomIn 4s ease-in-out forwards;
+}
+
+/* Animation: Zoom Out */
+.slide.active[data-animation="zoom-out"] .slide-img {
+    animation: zoomOut 4s ease-in-out forwards;
+}
+
+/* Animation: Pan (slight movement with scale) */
+.slide.active[data-animation="pan"] .slide-img {
+    animation: pan 4s ease-in-out forwards;
+}
+
+/* Slide Caption */
+.slide-caption {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.slide.active .slide-caption {
+    animation: slideUpFade 0.5s ease-out 0.5s forwards;
+}
+
+/* Keyframe Animations */
+@keyframes zoomIn {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.15);
+    }
+}
+
+@keyframes zoomOut {
+    0% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pan {
+    0% {
+        transform: scale(1) translateX(0);
+    }
+    25% {
+        transform: scale(1.05) translateX(-2%);
+    }
+    50% {
+        transform: scale(1.1) translateX(0);
+    }
+    75% {
+        transform: scale(1.05) translateX(2%);
+    }
+    100% {
+        transform: scale(1) translateX(0);
+    }
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fade transition between slides */
+.slide {
+    animation: fadeTransition 0.8s ease-in-out;
+}
+
+@keyframes fadeTransition {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Fallback slide when images don't load */
+.fallback-slide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    background: linear-gradient(135deg, var(--campus-gray-800), var(--campus-gray-700));
+    border-radius: 16px;
+    color: var(--campus-accent);
+    text-align: center;
+    padding: 40px;
+}
+
+.fallback-slide i {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: iconPulse 2s infinite;
+}
+
+.fallback-slide p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--campus-gray-300);
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Slideshow Navigation Dots */
+.slideshow-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 10;
+}
+
+.dot {
+    cursor: pointer;
+    height: 8px;
+    width: 8px;
+    margin: 0 6px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.dot:hover {
+    background-color: rgba(0, 240, 255, 0.8);
+    transform: scale(1.2);
+}
+
+.dot.active {
+    background-color: var(--campus-accent);
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Feature Cards - Interactive Hover Effects */
+.feature-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.08), transparent);
+    transition: left 0.5s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--campus-accent);
+    box-shadow: 0 15px 40px rgba(0, 240, 255, 0.2);
+}
+
+.feature-card:hover::before {
+    left: 100%;
+}
+
+.feature-card .feature-icon {
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+.feature-card:hover .feature-icon i {
+    filter: drop-shadow(0 0 8px var(--campus-accent));
+}
+
+/* How It Works Cards - Interactive Hover Effects */
+.how-it-works-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border-radius: 24px;
+    background: var(--campus-glass-bg);
+    backdrop-filter: var(--campus-glass-blur);
+    border: 1px solid var(--campus-glass-border);
+    padding: 24px;
+}
+
+.how-it-works-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--campus-accent);
+    background: rgba(0, 240, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.15);
+}
+
+.how-it-works-card:hover .step-number {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--campus-accent);
+}
+
+.how-it-works-card:hover i {
+    transform: scale(1.05);
+}
+
+.step-number {
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    background: var(--campus-accent-soft);
+    border: 1px solid var(--campus-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--campus-accent);
+}
+
+/* CTA Card Hover Effect */
+.cta-card {
+    transition: all 0.3s ease;
+}
+
+.cta-card:hover {
+    transform: scale(1.02);
+    border-color: var(--campus-accent);
+    box-shadow: 0 15px 40px rgba(0, 240, 255, 0.2);
+}
+
+.hero-preview {
+    position: relative;
+}
+
+.mockup-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.mockup-marker {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--campus-accent);
+    color: var(--campus-primary-dark);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s infinite;
+    z-index: 15;
+    white-space: nowrap;
+}
+
+.stats-badge {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 20px;
+    z-index: 10;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+/* Hide stats badge on mobile */
+@media (max-width: 768px) {
+    .stats-badge {
+        display: none;
+    }
+    
+    .mockup-marker {
+        bottom: 15px;
+        padding: 5px 12px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+    
+    .slideshow-dots {
+        bottom: 15px;
+    }
+    
+    .dot {
+        height: 6px;
+        width: 6px;
+        margin: 0 4px;
+    }
+    
+    .dot.active {
+        width: 16px;
+    }
+    
+    .fallback-slide {
+        min-height: 250px;
+        padding: 30px;
+    }
+    
+    .fallback-slide i {
+        font-size: 48px;
+    }
+    
+    .slide-caption {
+        font-size: 10px;
+        padding: 4px 10px;
+        bottom: 10px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Slideshow functionality with animation tracking
+let slideIndex = 0;
+let slideInterval;
+let slides = [];
+let dots = [];
+let animationTimeout = null;
+
+function initSlideshow() {
+    slides = document.getElementsByClassName("slide");
+    dots = document.getElementsByClassName("dot");
+    
+    if (slides.length === 0) return;
+    
+    // Check which slide should be active
+    for (let i = 0; i < slides.length; i++) {
+        if (slides[i].classList.contains('active')) {
+            slideIndex = i;
+            break;
+        }
+    }
+    
+    startSlideshow();
+}
+
+function showSlides() {
+    if (slides.length === 0) return;
+    
+    // Clear any pending animation timeout
+    if (animationTimeout) {
+        clearTimeout(animationTimeout);
+    }
+    
+    // Hide all slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove('active');
+        // Reset animation by removing and re-adding image
+        const img = slides[i].querySelector('.slide-img');
+        if (img) {
+            img.style.animation = 'none';
+        }
+    }
+    
+    // Remove active class from all dots
+    for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove('active');
+    }
+    
+    // Increment slide index
+    slideIndex++;
+    if (slideIndex >= slides.length) {
+        slideIndex = 0;
+    }
+    
+    // Show current slide
+    slides[slideIndex].classList.add('active');
+    
+    // Re-trigger animation by forcing reflow
+    const activeImg = slides[slideIndex].querySelector('.slide-img');
+    if (activeImg) {
+        void activeImg.offsetHeight; // Force reflow
+        activeImg.style.animation = '';
+    }
+    
+    // Add active class to current dot
+    if (dots[slideIndex]) {
+        dots[slideIndex].classList.add('active');
+    }
+}
+
+function currentSlide(n) {
+    // Reset interval
+    clearInterval(slideInterval);
+    
+    // Clear any pending animation timeout
+    if (animationTimeout) {
+        clearTimeout(animationTimeout);
+    }
+    
+    // Hide all slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove('active');
+        // Reset animation
+        const img = slides[i].querySelector('.slide-img');
+        if (img) {
+            img.style.animation = 'none';
+        }
+    }
+    
+    // Remove active class from all dots
+    for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove('active');
+    }
+    
+    // Set new index
+    slideIndex = n;
+    
+    // Show selected slide
+    if (slides[slideIndex]) {
+        slides[slideIndex].classList.add('active');
+        
+        // Re-trigger animation
+        const activeImg = slides[slideIndex].querySelector('.slide-img');
+        if (activeImg) {
+            void activeImg.offsetHeight;
+            activeImg.style.animation = '';
+        }
+    }
+    
+    // Add active class to selected dot
+    if (dots[slideIndex]) {
+        dots[slideIndex].classList.add('active');
+    }
+    
+    // Restart interval
+    startSlideshow();
+}
+
+function startSlideshow() {
+    if (slideInterval) {
+        clearInterval(slideInterval);
+    }
+    slideInterval = setInterval(showSlides, 4000); // Change image every 4 seconds
+}
+
+// Start the slideshow when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initSlideshow();
+});
+
+// Pause slideshow on hover
+document.addEventListener('DOMContentLoaded', function() {
+    const slideshowContainer = document.querySelector('.slideshow-container');
+    if (slideshowContainer) {
+        slideshowContainer.addEventListener('mouseenter', function() {
+            if (slideInterval) {
+                clearInterval(slideInterval);
+            }
+        });
+        
+        slideshowContainer.addEventListener('mouseleave', function() {
+            startSlideshow();
+        });
+    }
+});
+
+// Preload images to ensure smooth transition
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('.slide-img');
+    images.forEach(img => {
+        if (img.complete === false) {
+            img.addEventListener('load', function() {
+                console.log('Image loaded:', this.src);
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

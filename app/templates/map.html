@@ -1,0 +1,1036 @@
+{% extends 'base_user.html' %}
+
+{% block title %}Map Navigation{% endblock %}
+{% block topbar_title %}Campus Map{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+<style>
+#map {
+    height: calc(100vh - 73px);
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--campus-gray-800);
+}
+
+/* Search Container */
+.search-container {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 500px;
+    transition: all 0.3s ease;
+}
+
+.search-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-20px);
+}
+
+.search-input-group {
+    background: var(--campus-glass-bg);
+    backdrop-filter: var(--campus-glass-blur);
+    border-radius: 50px;
+    border: 1px solid var(--campus-glass-border);
+    overflow: hidden;
+    display: flex;
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    padding: 14px 20px;
+    color: white;
+    width: 100%;
+    font-size: 16px;
+}
+
+.search-input:focus {
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: var(--campus-gray-500);
+}
+
+.search-btn {
+    background: var(--campus-accent);
+    border: none;
+    padding: 0 20px;
+    color: var(--campus-primary-dark);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-btn:hover {
+    background: var(--campus-accent-dark);
+}
+
+/* Show Search Button */
+.show-search-btn {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: var(--campus-accent);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--campus-shadow-lg);
+    border: none;
+}
+
+.show-search-btn.visible {
+    display: flex;
+}
+
+.show-search-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--campus-shadow-glow);
+}
+
+.show-search-btn i {
+    color: var(--campus-primary-dark);
+    font-size: 20px;
+}
+
+/* Map Type Selector */
+.map-type-selector {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: var(--campus-glass-bg);
+    backdrop-filter: var(--campus-glass-blur);
+    border-radius: 40px;
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    border: 1px solid var(--campus-glass-border);
+}
+
+.map-type-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 30px;
+    color: var(--campus-gray-400);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.map-type-btn:hover {
+    color: var(--campus-accent);
+}
+
+.map-type-btn.active {
+    background: var(--campus-accent);
+    color: var(--campus-primary-dark);
+}
+
+/* Legend Panel */
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    right: 80px;
+    z-index: 1000;
+    background: var(--campus-glass-bg);
+    backdrop-filter: var(--campus-glass-blur);
+    border-radius: 12px;
+    padding: 10px 15px;
+    border: 1px solid var(--campus-glass-border);
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.map-legend h4 {
+    font-size: 11px;
+    margin: 0 0 8px 0;
+    color: var(--campus-accent);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-color.user {
+    background: #00F0FF;
+    box-shadow: 0 0 5px #00F0FF;
+}
+
+.legend-color.destination {
+    background: #FF1744;
+    box-shadow: 0 0 5px #FF1744;
+}
+
+.legend-color.building {
+    background: #00F0FF;
+    border: 1px solid white;
+    opacity: 0.8;
+}
+
+.legend-color.route {
+    width: 20px;
+    height: 3px;
+    background: #00F0FF;
+    border-radius: 2px;
+}
+
+/* GPS button */
+.gps-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--campus-accent);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--campus-shadow-lg);
+    border: none;
+}
+
+.gps-button:hover {
+    transform: scale(1.05);
+    box-shadow: var(--campus-shadow-glow);
+}
+
+.gps-button i {
+    color: var(--campus-primary-dark);
+    font-size: 24px;
+}
+
+/* Autocomplete dropdown */
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--campus-gray-800);
+    border-radius: 12px;
+    margin-top: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: var(--campus-shadow-lg);
+    border: 1px solid var(--campus-gray-700);
+    display: none;
+}
+
+.autocomplete-dropdown.active {
+    display: block;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--campus-gray-700);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover {
+    background: var(--campus-accent-soft);
+}
+
+.autocomplete-item .building-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 240, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--campus-accent);
+}
+
+.autocomplete-item .building-info {
+    flex: 1;
+}
+
+.autocomplete-item .building-name {
+    font-weight: 600;
+    color: white;
+    font-size: 14px;
+}
+
+.autocomplete-item .building-type {
+    font-size: 11px;
+    color: var(--campus-gray-500);
+    margin-top: 2px;
+}
+
+/* Custom marker popup */
+.custom-popup .leaflet-popup-content-wrapper {
+    background: var(--campus-gray-800);
+    border-radius: 12px;
+    border: 1px solid var(--campus-accent);
+    color: white;
+    width: 260px;
+}
+
+.custom-popup .leaflet-popup-tip {
+    background: var(--campus-gray-800);
+    border: 1px solid var(--campus-accent);
+}
+
+.popup-content {
+    padding: 5px;
+}
+
+.popup-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--campus-accent);
+    font-size: 14px;
+}
+
+.popup-description {
+    font-size: 12px;
+    color: var(--campus-gray-400);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.popup-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.popup-btn-primary {
+    background: var(--campus-accent);
+    color: var(--campus-primary-dark);
+}
+
+.popup-btn-primary:hover {
+    background: var(--campus-accent-dark);
+}
+
+.popup-btn-outline {
+    background: transparent;
+    border: 1px solid var(--campus-gray-600);
+    color: white;
+}
+
+.popup-btn-outline:hover {
+    border-color: var(--campus-accent);
+    color: var(--campus-accent);
+}
+
+/* Map Preloader */
+.map-preloader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(13, 13, 13, 0.95);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.map-preloader.hide {
+    opacity: 0;
+    visibility: hidden;
+    display: none;
+}
+
+.map-preloader-container {
+    text-align: center;
+}
+
+/* Location Modal */
+.location-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.location-modal-content {
+    max-width: 400px;
+    width: 90%;
+    padding: 30px;
+    text-align: center;
+    animation: slideUp 0.3s ease;
+}
+
+.location-modal-icon {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 23, 68, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.location-modal-icon i {
+    font-size: 35px;
+    color: #FF1744;
+}
+
+.location-modal-content h3 {
+    margin-bottom: 10px;
+    color: #FFD600;
+}
+
+.location-distance {
+    background: rgba(0, 240, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 30px;
+    display: inline-block;
+    margin: 15px auto;
+    font-size: 14px;
+    color: var(--campus-accent);
+}
+
+.location-warning {
+    font-size: 12px;
+    color: var(--campus-gray-400);
+    margin-top: 15px;
+}
+
+.location-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        width: 95%;
+    }
+    .map-legend {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Map Preloader -->
+<div id="map-preloader" class="map-preloader">
+    <div class="map-preloader-container">
+        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--campus-accent);"></i>
+        <p class="mt-3 text-white-50">Loading campus map...</p>
+    </div>
+</div>
+
+<div style="position: relative; height: calc(100vh - 73px);">
+    <!-- Hidden CSRF token -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <!-- Search Bar -->
+    <div class="search-container" id="searchContainer">
+        <div class="search-input-group">
+            <input type="text" id="searchInput" class="search-input" 
+                   placeholder="Search for a building..." autocomplete="off">
+            <button id="searchBtn" class="search-btn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+    </div>
+    
+    <!-- Show Search Button -->
+    <button id="showSearchBtn" class="show-search-btn" title="Search">
+        <i class="fas fa-search"></i>
+    </button>
+    
+    <!-- Map Type Selector -->
+    <div class="map-type-selector">
+        <button class="map-type-btn active" data-type="dark">Dark</button>
+        <button class="map-type-btn" data-type="light">Light</button>
+        <button class="map-type-btn" data-type="satellite">Satellite</button>
+    </div>
+    
+    <!-- Legend -->
+    <div class="map-legend">
+        <h4>Map Legend</h4>
+        <div class="legend-item">
+            <div class="legend-color user"></div>
+            <span>Your Location</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color destination"></div>
+            <span>Destination</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color building"></div>
+            <span>Campus Buildings</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color route"></div>
+            <span>Walking Route</span>
+        </div>
+    </div>
+    
+    <!-- Map Container -->
+    <div id="map"></div>
+    
+    <!-- GPS Button -->
+    <button id="gpsBtn" class="gps-button" title="My Location">
+        <i class="fas fa-location-dot"></i>
+    </button>
+</div>
+
+<!-- Location Restriction Modal -->
+<div id="locationRestrictionModal" class="location-modal">
+    <div class="location-modal-content campus-glass-card">
+        <div class="location-modal-icon">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <h3>📍 Outside LASU Campus</h3>
+        <p>You appear to be outside the LASU Ojo Campus area.</p>
+        <div class="location-distance" id="locationDistance"></div>
+        <p class="location-warning">Campus Compass is designed for navigation within LASU campus. Some features may be limited.</p>
+        <div class="location-modal-actions">
+            <button class="btn-campus-outline-light" onclick="closeLocationModal()">Dismiss</button>
+            <button class="btn-campus-accent" onclick="proceedAnyway()">Continue Anyway</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+<script>
+// ============================================
+// GLOBAL VARIABLES
+// ============================================
+let map;
+let currentTileLayer;
+let markersLayer;
+let buildingsData = [];
+let userLocation = null;
+let userMarker = null;
+let destinationMarker = null;
+let currentRoutingControl = null;
+let isDataLoaded = false;
+let isMapReady = false;
+let allowNavigation = false;
+let pendingDestination = null;
+let currentDestination = null;
+
+// ============================================
+// LASU CAMPUS BOUNDARIES
+// ============================================
+const LASU_BOUNDS = {
+    minLat: 6.4600,
+    maxLat: 6.4700,
+    minLng: 3.2280,
+    maxLng: 3.2400,
+    center: { lat: 6.4655, lng: 3.2345 }
+};
+
+function isWithinLASUCampus(lat, lng) {
+    return (lat >= LASU_BOUNDS.minLat && lat <= LASU_BOUNDS.maxLat &&
+            lng >= LASU_BOUNDS.minLng && lng <= LASU_BOUNDS.maxLng);
+}
+
+function distanceFromLASU(lat, lng) {
+    const R = 6371;
+    const dLat = (LASU_BOUNDS.center.lat - lat) * Math.PI / 180;
+    const dLng = (LASU_BOUNDS.center.lng - lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat * Math.PI / 180) * Math.cos(LASU_BOUNDS.center.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
+function closeLocationModal() {
+    const modal = document.getElementById('locationRestrictionModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function proceedAnyway() {
+    allowNavigation = true;
+    closeLocationModal();
+    if (typeof notify !== 'undefined') notify.info('Navigation enabled. Routes may be approximate.');
+    if (pendingDestination) {
+        const { lat, lng, name } = pendingDestination;
+        pendingDestination = null;
+        originalSetDestination(lat, lng, name);
+    }
+}
+
+// ============================================
+// TILE LAYERS
+// ============================================
+const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM & CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+});
+
+const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM & CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+});
+
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri',
+    maxZoom: 19
+});
+
+// ============================================
+// HIDE PRELOADER
+// ============================================
+function hideMapPreloader() {
+    const preloader = document.getElementById('map-preloader');
+    if (preloader) preloader.classList.add('hide');
+}
+
+function checkReady() {
+    if (isMapReady && isDataLoaded) setTimeout(hideMapPreloader, 500);
+}
+
+// ============================================
+// SEARCH BAR TOGGLE
+// ============================================
+function hideSearchBar() {
+    document.getElementById('searchContainer').classList.add('hidden');
+    document.getElementById('showSearchBtn').classList.add('visible');
+}
+
+function showSearchBar() {
+    document.getElementById('searchContainer').classList.remove('hidden');
+    document.getElementById('showSearchBtn').classList.remove('visible');
+    document.getElementById('searchInput').focus();
+}
+
+// ============================================
+// INITIALIZE MAP
+// ============================================
+function initMap() {
+    map = L.map('map').setView([LASU_BOUNDS.center.lat, LASU_BOUNDS.center.lng], 16);
+    currentTileLayer = darkLayer;
+    currentTileLayer.addTo(map);
+    markersLayer = L.layerGroup().addTo(map);
+    
+    isMapReady = true;
+    checkReady();
+    
+    loadCampusData();
+    getUserLocation();
+    setupEventListeners();
+    addCampusBoundary();
+}
+
+function addCampusBoundary() {
+    const bounds = [[LASU_BOUNDS.minLat, LASU_BOUNDS.minLng], [LASU_BOUNDS.maxLat, LASU_BOUNDS.maxLng]];
+    L.rectangle(bounds, {
+        color: "#00F0FF",
+        weight: 2,
+        opacity: 0.8,
+        fillColor: "#00F0FF",
+        fillOpacity: 0.05
+    }).bindPopup("<strong>LASU Ojo Campus</strong>").addTo(map);
+}
+
+// ============================================
+// SETUP EVENT LISTENERS
+// ============================================
+function setupEventListeners() {
+    document.getElementById('gpsBtn').addEventListener('click', centerOnUser);
+    document.getElementById('showSearchBtn').addEventListener('click', showSearchBar);
+    document.getElementById('searchBtn').addEventListener('click', performSearch);
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+    document.getElementById('searchInput').addEventListener('input', handleSearchInput);
+    
+    document.querySelectorAll('.map-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.map-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            map.removeLayer(currentTileLayer);
+            if (btn.dataset.type === 'dark') currentTileLayer = darkLayer;
+            else if (btn.dataset.type === 'light') currentTileLayer = lightLayer;
+            else currentTileLayer = satelliteLayer;
+            currentTileLayer.addTo(map);
+        });
+    });
+}
+
+// ============================================
+// LOAD CAMPUS DATA
+// ============================================
+async function loadCampusData() {
+    try {
+        const response = await fetch('/static/data/campus_data.json');
+        const data = await response.json();
+        buildingsData = data.buildings;
+        addMarkersToMap(buildingsData);
+        console.log(`✅ Loaded ${buildingsData.length} buildings`);
+        isDataLoaded = true;
+        checkReady();
+    } catch (error) {
+        console.error('Failed to load campus data:', error);
+        isDataLoaded = true;
+        checkReady();
+        if (typeof notify !== 'undefined') notify.error('Failed to load campus data');
+    }
+}
+
+function getBuildingMarker() {
+    return L.divIcon({
+        html: `<div style="background-color: #00F0FF; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #00F0FF;"></div>`,
+        iconSize: [12, 12]
+    });
+}
+
+function getUserMarker() {
+    return L.divIcon({
+        html: `<div style="position: relative;">
+                    <div style="background-color: #00F0FF; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 20px #00F0FF;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: white;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(0, 240, 255, 0.2); animation: pulse 1.5s infinite;"></div>
+                </div>
+                <style>
+                    @keyframes pulse {
+                        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+                        100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+                    }
+                </style>`,
+        iconSize: [18, 18]
+    });
+}
+
+function getDestinationMarker() {
+    return L.divIcon({
+        html: `<div style="position: relative;">
+                    <div style="background-color: #FF1744; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px #FF1744;"></div>
+                    <div style="position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 12px solid #FF1744;"></div>
+                </div>`,
+        iconSize: [24, 30]
+    });
+}
+
+function addMarkersToMap(buildings) {
+    markersLayer.clearLayers();
+    buildings.forEach(building => {
+        const marker = L.marker([building.latitude, building.longitude], { icon: getBuildingMarker() })
+            .bindPopup(`
+                <div class="popup-content">
+                    <div class="popup-title">📍 ${escapeHtml(building.name)}</div>
+                    <div class="popup-description">${escapeHtml(building.description.substring(0, 100))}</div>
+                    <div class="popup-actions">
+                        <button class="popup-btn popup-btn-primary" onclick="window.setDestination(${building.latitude}, ${building.longitude}, '${escapeHtml(building.name)}')">
+                            <i class="fas fa-location-dot"></i> Navigate
+                        </button>
+                    </div>
+                </div>
+            `, { className: 'custom-popup', maxWidth: 280 });
+        markersLayer.addLayer(marker);
+    });
+}
+
+// ============================================
+// USER LOCATION
+// ============================================
+function getUserLocation() {
+    if (!navigator.geolocation) {
+        if (typeof notify !== 'undefined') notify.warning('Geolocation not supported');
+        return;
+    }
+    
+    const gpsBtn = document.getElementById('gpsBtn');
+    gpsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            console.log(`📍 User location: ${userLocation.lat}, ${userLocation.lng}`);
+            
+            const withinCampus = isWithinLASUCampus(userLocation.lat, userLocation.lng);
+            const distance = distanceFromLASU(userLocation.lat, userLocation.lng);
+            
+            if (withinCampus) {
+                map.setView([userLocation.lat, userLocation.lng], 17);
+                addUserMarker();
+                if (typeof notify !== 'undefined') notify.success('📍 Welcome to LASU Campus!');
+            } else {
+                map.setView([LASU_BOUNDS.center.lat, LASU_BOUNDS.center.lng], 14);
+                addUserMarker();
+                const distanceKm = distance.toFixed(1);
+                if (typeof notify !== 'undefined') notify.warning(`You are ${distanceKm}km from LASU Campus.`);
+            }
+            
+            gpsBtn.innerHTML = '<i class="fas fa-location-dot"></i>';
+            checkSessionStorage();
+        },
+        (error) => {
+            console.error('Geolocation error:', error);
+            gpsBtn.innerHTML = '<i class="fas fa-location-dot"></i>';
+            if (typeof notify !== 'undefined') notify.error('Unable to get location. Please enable GPS.');
+            map.setView([LASU_BOUNDS.center.lat, LASU_BOUNDS.center.lng], 14);
+        }
+    );
+}
+
+function addUserMarker() {
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: getUserMarker() })
+        .bindPopup('<strong>📍 You are here</strong>').addTo(map);
+}
+
+// ============================================
+// SET DESTINATION
+// ============================================
+function originalSetDestination(lat, lng, name) {
+    currentDestination = { lat: lat, lng: lng, name: name };
+    
+    if (destinationMarker) map.removeLayer(destinationMarker);
+    
+    destinationMarker = L.marker([lat, lng], { icon: getDestinationMarker() })
+        .bindPopup(`<strong>📍 ${escapeHtml(name)}</strong><br>Your destination`).addTo(map);
+    
+    hideSearchBar();
+    map.flyTo([lat, lng], 18, { duration: 1.5 });
+    
+    setTimeout(() => {
+        if (userLocation) {
+            const bounds = L.latLngBounds([userLocation, { lat: lat, lng: lng }]);
+            map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+        }
+    }, 1600);
+    
+    if (typeof notify !== 'undefined') notify.success(`📍 ${name} set as destination`);
+    
+    if (currentRoutingControl) map.removeControl(currentRoutingControl);
+    
+    currentRoutingControl = L.Routing.control({
+        waypoints: [L.latLng(userLocation.lat, userLocation.lng), L.latLng(lat, lng)],
+        lineOptions: { styles: [{ color: '#00F0FF', weight: 5 }] },
+        createMarker: () => null,
+        addWaypoints: false,
+        show: false
+    }).addTo(map);
+    
+    currentRoutingControl.on('routesfound', () => {
+        if (typeof notify !== 'undefined') notify.success('Route found!');
+    });
+    currentRoutingControl.on('routingerror', () => {
+        if (typeof notify !== 'undefined') notify.warning('Could not find walking route.');
+    });
+}
+
+window.setDestination = function(lat, lng, name) {
+    if (!userLocation) {
+        if (typeof notify !== 'undefined') notify.warning('Detecting your location...');
+        setTimeout(() => {
+            if (userLocation) window.setDestination(lat, lng, name);
+        }, 1000);
+        return;
+    }
+    
+    const withinCampus = isWithinLASUCampus(userLocation.lat, userLocation.lng);
+    const distance = distanceFromLASU(userLocation.lat, userLocation.lng);
+    
+    if (!withinCampus && !allowNavigation) {
+        pendingDestination = { lat, lng, name };
+        const distanceKm = distance.toFixed(1);
+        document.getElementById('locationDistance').innerHTML = `📍 Approximately ${distanceKm} km from LASU Campus`;
+        document.getElementById('locationRestrictionModal').style.display = 'flex';
+        return;
+    }
+    
+    originalSetDestination(lat, lng, name);
+};
+
+// ============================================
+// SEARCH FUNCTIONALITY
+// ============================================
+let searchTimeout;
+
+function handleSearchInput() {
+    clearTimeout(searchTimeout);
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const dropdown = document.getElementById('autocompleteDropdown');
+    
+    if (query.length === 0) {
+        dropdown.classList.remove('active');
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        const matches = buildingsData.filter(b => b.name.toLowerCase().includes(query)).slice(0, 8);
+        if (matches.length > 0) {
+            dropdown.innerHTML = matches.map(m => `
+                <div class="autocomplete-item" onclick="selectBuilding(${m.id})">
+                    <div class="building-icon"><i class="fas fa-building"></i></div>
+                    <div class="building-info">
+                        <div class="building-name">${escapeHtml(m.name)}</div>
+                        <div class="building-type">${m.building_type}</div>
+                    </div>
+                </div>
+            `).join('');
+            dropdown.classList.add('active');
+        } else {
+            dropdown.innerHTML = '<div class="autocomplete-item">No buildings found</div>';
+            dropdown.classList.add('active');
+        }
+    }, 300);
+}
+
+function performSearch() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const building = buildingsData.find(b => b.name.toLowerCase() === query);
+    if (building) selectBuilding(building.id);
+    else if (query && typeof notify !== 'undefined') notify.warning('Building not found');
+}
+
+function selectBuilding(id) {
+    const building = buildingsData.find(b => b.id === id);
+    if (building) {
+        document.getElementById('searchInput').value = building.name;
+        document.getElementById('autocompleteDropdown').classList.remove('active');
+        window.setDestination(building.latitude, building.longitude, building.name);
+    }
+}
+
+// ============================================
+// UTILITIES
+// ============================================
+function centerOnUser() {
+    if (userLocation) {
+        map.setView([userLocation.lat, userLocation.lng], 17);
+        if (typeof notify !== 'undefined') notify.info('Centered on your location');
+        showSearchBar();
+    } else {
+        if (typeof notify !== 'undefined') notify.warning('Location not available');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function checkSessionStorage() {
+    const lat = sessionStorage.getItem('map_destination_lat');
+    const lng = sessionStorage.getItem('map_destination_lng');
+    const name = sessionStorage.getItem('map_destination_name');
+    
+    if (lat && lng && name) {
+        sessionStorage.removeItem('map_destination_lat');
+        sessionStorage.removeItem('map_destination_lng');
+        sessionStorage.removeItem('map_destination_name');
+        setTimeout(() => window.setDestination(parseFloat(lat), parseFloat(lng), name), 1500);
+    }
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+        document.getElementById('autocompleteDropdown').classList.remove('active');
+    }
+});
+
+window.selectBuilding = selectBuilding;
+window.closeLocationModal = closeLocationModal;
+window.proceedAnyway = proceedAnyway;
+
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+{% endblock %}

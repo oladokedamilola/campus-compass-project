@@ -1,0 +1,306 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Verify Matric Number{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100 py-5 mt-5">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="campus-glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <i class="fas fa-id-card fa-3x" style="color: var(--campus-accent);"></i>
+                </div>
+                <h1 class="h3 fw-bold campus-text-gradient">Verify Your Matric Number</h1>
+                <p class="text-white-50 mt-2">
+                    Enter your LASU matric number to begin registration
+                </p>
+            </div>
+            
+            <form id="verifyForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-4">
+                    <label for="matric_number" class="form-label text-white">Matric Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
+                            <i class="fas fa-graduation-cap" style="color: var(--campus-gray-500);"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-campus border-start-0" 
+                               id="matric_number" name="matric_number" 
+                               placeholder="e.g., 202167921" required>
+                    </div>
+                    <small class="text-white-50 mt-1 d-block">
+                        Format: 9 digits
+                    </small>
+                    <div id="matricCheck" class="small mt-1"></div>
+                </div>
+                
+                <button type="submit" class="btn btn-campus-accent w-100 py-3 fw-bold" id="verifyBtn">
+                    <i class="fas fa-check-circle me-2"></i>Verify & Continue
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <p class="text-white-50 mb-0">
+                    Already have an account? 
+                    <a href="{{ url_for('auth.login_page') }}" class="text-decoration-none fw-bold" style="color: var(--campus-accent);">
+                        Sign In
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graduated Student Modal -->
+<div class="modal fade" id="graduatedModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content campus-glass-card" style="border: 1px solid var(--campus-accent);">
+            <div class="modal-body text-center p-4 p-md-5">
+                <div class="graduated-animation mb-4">
+                    <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_q9wopkxb.json" 
+                                   background="transparent" 
+                                   speed="1" 
+                                   style="width: 200px; height: 200px; margin: 0 auto;" 
+                                   loop autoplay>
+                    </lottie-player>
+                </div>
+                <div class="graduated-icon mb-3" style="display: none;">
+                    <i class="fas fa-graduation-cap fa-4x" style="color: var(--campus-accent);"></i>
+                </div>
+                <h2 class="h4 fw-bold mb-3" style="color: var(--campus-accent);">🎓 Congratulations, Graduate! 🎉</h2>
+                <p class="text-white-50 mb-4">
+                    You have successfully completed your studies at LASU.<br>
+                    Campus Compass is available for current students only.<br><br>
+                    <strong>We wish you all the best in your future endeavors!</strong>
+                </p>
+                <div class="progress mb-3" style="height: 3px; background: var(--campus-gray-700);">
+                    <div class="progress-bar" role="progressbar" style="width: 100%; background: var(--campus-accent); transition: width 5s linear;"></div>
+                </div>
+                <p class="small text-white-50">Redirecting to home page in <span id="countdown">5</span> seconds...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Modal animations */
+.modal-content {
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Lottie player fallback - show icon if animation doesn't load */
+lottie-player {
+    margin: 0 auto;
+}
+
+/* Progress bar animation */
+.progress-bar {
+    animation: progressShrink 5s linear forwards;
+}
+
+@keyframes progressShrink {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Graduation cap floating animation */
+@keyframes floatCap {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(5deg);
+    }
+}
+
+.graduated-icon i {
+    animation: floatCap 2s ease-in-out infinite;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isMatricValid = false;
+let matricTimeout;
+let graduatedRedirectTimer = null;
+
+const matricInput = document.getElementById('matric_number');
+const matricCheck = document.getElementById('matricCheck');
+
+// Function to get CSRF token
+function getCsrfToken() {
+    const tokenElement = document.querySelector('[name=csrf_token]');
+    return tokenElement ? tokenElement.value : '';
+}
+
+// Function to show graduated modal
+function showGraduatedModal() {
+    const modal = new bootstrap.Modal(document.getElementById('graduatedModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    modal.show();
+    
+    // Countdown timer
+    let seconds = 5;
+    const countdownEl = document.getElementById('countdown');
+    const countdownInterval = setInterval(() => {
+        seconds--;
+        if (countdownEl) countdownEl.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(countdownInterval);
+            window.location.href = '/';
+        }
+    }, 1000);
+    
+    // Also set a timeout as fallback
+    graduatedRedirectTimer = setTimeout(() => {
+        window.location.href = '/';
+    }, 5000);
+}
+
+// Real-time matric number validation
+matricInput.addEventListener('input', () => {
+    clearTimeout(matricTimeout);
+    const matric = matricInput.value.trim().toUpperCase();
+    
+    if (matric.length < 9) {
+        matricCheck.innerHTML = '';
+        isMatricValid = false;
+        return;
+    }
+    
+    // Show checking indicator
+    matricCheck.innerHTML = '<span style="color: #00F0FF;">⏳ Checking...</span>';
+    
+    matricTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch('/auth/check-matric', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ matric_number: matric })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Check result:', result);
+            
+            // Check if student is graduated (inactive with graduation note)
+            if (result.is_graduated === true || (result.exists === false && result.message && result.message.includes('inactive'))) {
+                // Student is graduated/inactive - show modal
+                showGraduatedModal();
+                isMatricValid = false;
+                matricCheck.innerHTML = '';
+                return;
+            }
+            
+            if (result.exists && !result.is_registered) {
+                matricCheck.innerHTML = `<span style="color: #00E676;">✓ ${result.message}</span>`;
+                isMatricValid = true;
+            } else if (result.exists && result.is_registered) {
+                matricCheck.innerHTML = `<span style="color: #FFD600;">⚠️ ${result.message}</span>`;
+                isMatricValid = false;
+            } else {
+                matricCheck.innerHTML = `<span style="color: #FF1744;">❌ ${result.message || 'Matric number not found'}</span>`;
+                isMatricValid = false;
+            }
+        } catch (error) {
+            console.error('Matric check failed:', error);
+            matricCheck.innerHTML = '<span style="color: #FF1744;">❌ Connection error. Please try again.</span>';
+            isMatricValid = false;
+        }
+    }, 500);
+});
+
+// Form submission
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Don't submit if already showing graduated modal
+    if (graduatedRedirectTimer) return;
+    
+    const matric = matricInput.value.trim().toUpperCase();
+    
+    if (!matric) {
+        notify.error('Please enter your matric number');
+        return;
+    }
+    
+    if (!isMatricValid) {
+        notify.error('Please enter a valid matric number');
+        return;
+    }
+    
+    const btn = document.getElementById('verifyBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/auth/verify-matric', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ matric_number: matric })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            notify.success(result.message);
+            setTimeout(() => {
+                window.location.href = result.redirect;
+            }, 500);
+        } else {
+            // Check if it's a graduated student response
+            if (result.is_graduated === true || (result.message && result.message.includes('inactive'))) {
+                showGraduatedModal();
+            } else {
+                notify.error(result.message);
+            }
+            if (result.redirect) {
+                setTimeout(() => {
+                    window.location.href = result.redirect;
+                }, 2000);
+            }
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        notify.error('Network error. Please try again.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+</script>
+
+<!-- Lottie Player for animation -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+{% endblock %}

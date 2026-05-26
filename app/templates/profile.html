@@ -1,0 +1,737 @@
+{% extends 'base_user.html' %}
+
+{% block title %}My Profile{% endblock %}
+{% block topbar_title %}Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-avatar-large {
+    width: 100px;
+    height: 100px;
+    background: var(--campus-accent-soft);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--campus-accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.user-avatar-large:hover {
+    transform: scale(1.02);
+    border-color: var(--campus-accent);
+    box-shadow: 0 0 15px var(--campus-accent);
+}
+
+.user-avatar-large i {
+    color: var(--campus-accent);
+    font-size: 3rem;
+}
+
+.user-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 50%;
+}
+
+.user-avatar-large:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-overlay i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* Profile Image Modal */
+.profile-image-modal .modal-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.image-preview-container {
+    background: var(--campus-gray-800);
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 3px solid var(--campus-accent);
+}
+
+.image-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-container i {
+    font-size: 4rem;
+    color: var(--campus-accent);
+}
+
+.image-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.image-actions .btn {
+    flex: 1;
+}
+
+/* Read-only field styling */
+.readonly-field {
+    background-color: transparent !important;
+    color: var(--campus-gray-300) !important;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Password Constraints Panel */
+.password-constraints-panel {
+    background: rgba(33, 33, 33, 0.95);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+    border-left: 3px solid var(--campus-accent);
+    animation: slideDown 0.3s ease-out;
+}
+
+.constraints-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.constraint-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--campus-gray-400);
+    transition: all 0.2s ease;
+}
+
+.constraint-item i {
+    width: 16px;
+    font-size: 12px;
+}
+
+.constraint-item.valid {
+    color: #00E676;
+}
+
+.constraint-item.valid i {
+    color: #00E676;
+}
+
+/* Password Strength Indicator */
+.strength-container {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.strength-bar {
+    height: 4px;
+    background: var(--campus-gray-700);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.strength-progress {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.strength-text {
+    font-size: 11px;
+    margin-top: 6px;
+    text-align: right;
+    font-weight: 500;
+}
+
+/* Password different check */
+.password-different-check {
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.password-different-check.valid {
+    color: #00E676;
+}
+
+.password-different-check.invalid {
+    color: #FFD600;
+}
+
+#confirm_new_password:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="row g-4">
+        <!-- Profile Card -->
+        <div class="col-12 col-md-4">
+            <div class="campus-glass-card p-4 text-center">
+                <!-- Avatar - Click to open modal -->
+                <div class="user-avatar-large mx-auto mb-3" id="avatarContainer" data-bs-toggle="modal" data-bs-target="#profileImageModal">
+                    {% if user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile" id="profileImage" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user" id="profileIcon"></i>
+                    {% endif %}
+                    <div class="avatar-overlay">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                
+                <h3 class="h5 mb-1">{{ user.full_name }}</h3>
+                <span class="user-badge {{ user.user_type }} d-inline-flex mt-2">
+                    <i class="fas {% if user.is_admin() %}fa-shield-alt{% else %}fa-graduation-cap{% endif %} me-1"></i>
+                    {{ user.user_type|capitalize }}
+                </span>
+                <p class="small text-white-50 mt-3 mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}
+                </p>
+                {% if user.last_login %}
+                <p class="small text-white-50 mb-0">
+                    <i class="fas fa-clock me-1"></i>
+                    Last login: {{ user.last_login.strftime('%b %d, %Y') }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Edit Profile Form -->
+        <div class="col-12 col-md-8">
+            <div class="campus-glass-card p-4">
+                <h3 class="h5 mb-4">
+                    <i class="fas fa-edit me-2" style="color: var(--campus-accent);"></i>
+                    Edit Profile
+                </h3>
+                
+                <form id="profileForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">Full Name</label>
+                        <input type="text" class="form-control form-control-campus readonly-field" 
+                               value="{{ user.full_name }}" disabled>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">Matric Number</label>
+                        <input type="text" class="form-control form-control-campus readonly-field" 
+                               value="{{ user.matric_number }}" disabled>
+                    </div>
+                    
+                    <div class="border-top border-secondary my-4 pt-3">
+                        <h5 class="h6 mb-3">
+                            <i class="fas fa-key me-2" style="color: var(--campus-accent);"></i>
+                            Change Password
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">Current Password</label>
+                            <input type="password" class="form-control form-control-campus" 
+                                   id="current_password" placeholder="Enter current password">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label class="form-label text-white">New Password</label>
+                            <input type="password" class="form-control form-control-campus" 
+                                   id="new_password" placeholder="Leave blank to keep current">
+                        </div>
+                        
+                        <div id="passwordDifferentCheck" class="password-different-check" style="display: none;"></div>
+                        
+                        <div id="passwordStrengthContainer" class="strength-container" style="display: none;">
+                            <div class="strength-bar">
+                                <div class="strength-progress" id="strengthProgress"></div>
+                            </div>
+                            <div class="strength-text" id="strengthText"></div>
+                        </div>
+                        
+                        <div id="passwordConstraints" class="password-constraints-panel" style="display: none;">
+                            <div class="constraints-content">
+                                <div class="constraint-item" id="constraint-length"><i class="fas fa-circle-notch"></i> At least 6 characters</div>
+                                <div class="constraint-item" id="constraint-uppercase"><i class="fas fa-circle-notch"></i> At least one uppercase letter (A-Z)</div>
+                                <div class="constraint-item" id="constraint-number"><i class="fas fa-circle-notch"></i> At least one number (0-9)</div>
+                                <div class="constraint-item" id="constraint-special"><i class="fas fa-circle-notch"></i> At least one special character (!@#$%^&*)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">Confirm New Password</label>
+                            <input type="password" class="form-control form-control-campus" 
+                                   id="confirm_new_password" placeholder="Confirm new password" disabled>
+                            <div id="passwordMatch" class="small mt-1"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-campus-accent" id="updateBtn">
+                            <i class="fas fa-save me-2"></i>Update Password
+                        </button>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="fas fa-trash-alt me-2"></i>Delete Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Image Modal (Preview & Upload) -->
+<div class="modal fade profile-image-modal" id="profileImageModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content campus-glass-card">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-camera me-2" style="color: var(--campus-accent);"></i>
+                    Profile Picture
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="image-preview-container" id="modalImagePreview">
+                    {% if user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile Preview" id="modalPreviewImage">
+                    {% else %}
+                        <i class="fas fa-user" id="modalPreviewIcon"></i>
+                    {% endif %}
+                </div>
+                <div class="image-actions">
+                    <button type="button" class="btn btn-campus-outline-light" id="changeImageBtn">
+                        <i class="fas fa-upload me-2"></i>Change
+                    </button>
+                    <button type="button" class="btn btn-campus-accent" id="confirmImageBtn">
+                        <i class="fas fa-check me-2"></i>Confirm
+                    </button>
+                </div>
+                <input type="file" id="profileImageInput" class="hidden-file-input" style="display: none;" accept="image/jpeg, image/png, image/jpg, image/gif">
+                <small class="text-white-50 mt-2 d-block">Supported formats: JPG, PNG, GIF (Max 2MB)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content campus-glass-card">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2" style="color: #FF1744;"></i>
+                    Delete Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+                <div class="mb-3 mt-3">
+                    <label class="form-label text-white">Enter your password to confirm</label>
+                    <input type="password" class="form-control form-control-campus" id="delete_password" placeholder="Your password">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-campus-outline-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-account-btn">Permanently Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// PROFILE IMAGE UPLOAD WITH PREVIEW MODAL
+// ============================================
+
+let selectedImageFile = null;
+
+// Get CSRF token
+function getCsrfToken() {
+    const token = document.querySelector('[name=csrf_token]');
+    return token ? token.value : '';
+}
+
+// Open modal and reset preview
+const profileImageModal = document.getElementById('profileImageModal');
+profileImageModal.addEventListener('show.bs.modal', function() {
+    // Reset preview to current image
+    const currentImg = document.getElementById('profileImage');
+    const currentIcon = document.getElementById('profileIcon');
+    const modalImg = document.getElementById('modalPreviewImage');
+    const modalIcon = document.getElementById('modalPreviewIcon');
+    
+    if (currentImg && currentImg.src && currentImg.style.display !== 'none') {
+        modalImg.src = currentImg.src;
+        modalImg.style.display = 'block';
+        modalIcon.style.display = 'none';
+    } else {
+        modalImg.style.display = 'none';
+        modalIcon.style.display = 'flex';
+    }
+    
+    selectedImageFile = null;
+});
+
+// Change image button - open file picker
+document.getElementById('changeImageBtn').addEventListener('click', function() {
+    document.getElementById('profileImageInput').click();
+});
+
+// Handle file selection and preview
+document.getElementById('profileImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.match('image.*')) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Image must be less than 2MB');
+        return;
+    }
+    
+    selectedImageFile = file;
+    
+    // Preview in modal
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const modalImg = document.getElementById('modalPreviewImage');
+        const modalIcon = document.getElementById('modalPreviewIcon');
+        
+        modalImg.src = event.target.result;
+        modalImg.style.display = 'block';
+        modalIcon.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+});
+
+// Confirm image button - upload the selected image
+document.getElementById('confirmImageBtn').addEventListener('click', async function() {
+    if (!selectedImageFile) {
+        // No image selected, just close modal
+        bootstrap.Modal.getInstance(profileImageModal).hide();
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('profile_image', selectedImageFile);
+    formData.append('csrf_token', getCsrfToken());
+    
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/upload/profile-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update avatar on profile card
+            const avatarContainer = document.getElementById('avatarContainer');
+            avatarContainer.innerHTML = `<img src="${data.image_url}?t=${Date.now()}" style="width: 100%; height: 100%; object-fit: cover;"><div class="avatar-overlay"><i class="fas fa-camera"></i></div>`;
+            
+            // Also update the modal preview source for next time
+            const modalImg = document.getElementById('modalPreviewImage');
+            modalImg.src = data.image_url;
+            
+            if (typeof notify !== 'undefined') {
+                notify.success('Profile picture updated!');
+            } else {
+                alert('Profile picture updated!');
+            }
+            
+            // Close modal
+            bootstrap.Modal.getInstance(profileImageModal).hide();
+        } else {
+            if (typeof notify !== 'undefined') {
+                notify.error(data.message);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        if (typeof notify !== 'undefined') {
+            notify.error('Network error. Please try again.');
+        } else {
+            alert('Network error. Please try again.');
+        }
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        selectedImageFile = null;
+    }
+});
+
+// ============================================
+// PASSWORD VALIDATION
+// ============================================
+
+let passwordDebounce;
+let isPasswordValid = false;
+
+function checkPasswordStrength(pw) {
+    const hasLength = pw.length >= 6;
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /[0-9]/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    
+    let score = (hasLength ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
+    
+    document.getElementById('constraint-length').classList.toggle('valid', hasLength);
+    document.getElementById('constraint-uppercase').classList.toggle('valid', hasUpper);
+    document.getElementById('constraint-number').classList.toggle('valid', hasNumber);
+    document.getElementById('constraint-special').classList.toggle('valid', hasSpecial);
+    
+    // Update icons
+    document.getElementById('constraint-length').querySelector('i').className = hasLength ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    document.getElementById('constraint-uppercase').querySelector('i').className = hasUpper ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    document.getElementById('constraint-number').querySelector('i').className = hasNumber ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    document.getElementById('constraint-special').querySelector('i').className = hasSpecial ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    
+    // Strength bar
+    const bar = document.getElementById('strengthProgress');
+    const text = document.getElementById('strengthText');
+    const container = document.getElementById('passwordStrengthContainer');
+    
+    if (pw.length > 0) {
+        container.style.display = 'block';
+        let percent = 0, level = '', color = '';
+        if (score <= 1) { percent = 25; level = 'Weak'; color = '#FF1744'; }
+        else if (score <= 2) { percent = 50; level = 'Fair'; color = '#FFD600'; }
+        else if (score <= 3) { percent = 75; level = 'Good'; color = '#FFD600'; }
+        else { percent = 100; level = 'Strong'; color = '#00E676'; }
+        
+        bar.style.width = percent + '%';
+        bar.style.background = color;
+        text.innerHTML = `<span style="color: ${color};">🔒 ${level}</span>`;
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+async function checkPasswordDifferent() {
+    const current = document.getElementById('current_password').value;
+    const newPw = document.getElementById('new_password').value;
+    const diffDiv = document.getElementById('passwordDifferentCheck');
+    
+    if (!current || !newPw) {
+        diffDiv.style.display = 'none';
+        document.getElementById('new_password').style.borderColor = '';
+        document.getElementById('confirm_new_password').disabled = true;
+        isPasswordValid = false;
+        return;
+    }
+    
+    diffDiv.style.display = 'block';
+    diffDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    
+    try {
+        const res = await fetch('/dashboard/profile/check-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ current_password: current, new_password: newPw })
+        });
+        const data = await res.json();
+        
+        if (data.is_same) {
+            diffDiv.className = 'password-different-check invalid';
+            diffDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> New password must be different from current';
+            document.getElementById('new_password').style.borderColor = '#FF1744';
+            document.getElementById('confirm_new_password').disabled = true;
+            isPasswordValid = false;
+        } else {
+            diffDiv.className = 'password-different-check valid';
+            diffDiv.innerHTML = '<i class="fas fa-check-circle"></i> New password is different';
+            document.getElementById('new_password').style.borderColor = '#00E676';
+            document.getElementById('confirm_new_password').disabled = false;
+            isPasswordValid = true;
+        }
+    } catch(e) {
+        diffDiv.style.display = 'none';
+        isPasswordValid = true;
+    }
+}
+
+function checkPasswordMatch() {
+    const pw = document.getElementById('new_password').value;
+    const confirm = document.getElementById('confirm_new_password').value;
+    const matchDiv = document.getElementById('passwordMatch');
+    
+    if (!isPasswordValid || confirm.length === 0) {
+        matchDiv.innerHTML = '';
+        return false;
+    }
+    
+    if (pw === confirm) {
+        matchDiv.innerHTML = '<span style="color: #00E676;">✓ Passwords match</span>';
+        return true;
+    } else {
+        matchDiv.innerHTML = '<span style="color: #FF1744;">✗ Passwords do not match</span>';
+        return false;
+    }
+}
+
+// Event listeners
+const newPw = document.getElementById('new_password');
+newPw.addEventListener('input', () => {
+    checkPasswordStrength(newPw.value);
+    if (passwordDebounce) clearTimeout(passwordDebounce);
+    passwordDebounce = setTimeout(checkPasswordDifferent, 500);
+    checkPasswordMatch();
+});
+
+document.getElementById('confirm_new_password').addEventListener('input', checkPasswordMatch);
+document.getElementById('current_password').addEventListener('input', () => {
+    if (newPw.value) {
+        if (passwordDebounce) clearTimeout(passwordDebounce);
+        passwordDebounce = setTimeout(checkPasswordDifferent, 500);
+    }
+});
+
+// Password constraints panel
+newPw.addEventListener('focus', () => {
+    document.getElementById('passwordConstraints').style.display = 'block';
+});
+newPw.addEventListener('blur', () => {
+    setTimeout(() => {
+        document.getElementById('passwordConstraints').style.display = 'none';
+    }, 200);
+});
+
+// Form submission
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById('updateBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+    btn.disabled = true;
+    
+    const data = {
+        current_password: document.getElementById('current_password').value,
+        new_password: document.getElementById('new_password').value,
+        confirm_new_password: document.getElementById('confirm_new_password').value
+    };
+    
+    if (data.new_password && data.new_password !== data.confirm_new_password) {
+        alert('Passwords do not match');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+    }
+    
+    if (data.new_password && data.new_password.length < 6) {
+        alert('Password must be at least 6 characters');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+    }
+    
+    try {
+        const res = await fetch('/dashboard/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            alert('Password updated successfully!');
+            document.getElementById('current_password').value = '';
+            document.getElementById('new_password').value = '';
+            document.getElementById('confirm_new_password').value = '';
+            document.getElementById('confirm_new_password').disabled = true;
+            if (data.new_password) setTimeout(() => window.location.reload(), 1500);
+        } else {
+            alert(result.message);
+        }
+    } catch(e) {
+        alert('Network error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+
+// Delete account
+document.getElementById('confirm-delete-account-btn').addEventListener('click', async () => {
+    const password = document.getElementById('delete_password').value;
+    if (!password) {
+        alert('Enter your password to confirm');
+        return;
+    }
+    
+    const btn = document.getElementById('confirm-delete-account-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    
+    try {
+        const res = await fetch('/dashboard/profile/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ password: password })
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            alert(result.message);
+            window.location.href = '/';
+        } else {
+            alert(result.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Permanently Delete';
+        }
+    } catch(e) {
+        alert('Network error');
+        btn.disabled = false;
+        btn.innerHTML = 'Permanently Delete';
+    }
+});
+</script>
+{% endblock %}
