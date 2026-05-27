@@ -1,18 +1,18 @@
 {
   "buildings": [
     {
-      "id": 1,
       "name": "Senate Building",
+      "building_type": "admin",
+      "description": "Main administrative building with helipad, elevators, and staircase. Houses Vice-Chancellor's office.",
       "latitude": 6.4655,
       "longitude": 3.2345,
-      "description": "Main administrative building with helipad, elevators, and staircase. Houses Vice-Chancellor's office.",
-      "building_type": "admin"
+      "id": 1
     },
     {
       "id": 2,
       "name": "Faculty of Science",
-      "latitude": 6.4660,
-      "longitude": 3.2350,
+      "latitude": 6.466,
+      "longitude": 3.235,
       "description": "Faculty of Science - Computer Science, Mathematics, Physics, Chemistry, and Biological Sciences departments.",
       "building_type": "faculty"
     },
@@ -28,14 +28,14 @@
       "id": 4,
       "name": "Faculty of Social Sciences",
       "latitude": 6.4645,
-      "longitude": 3.2340,
+      "longitude": 3.234,
       "description": "Economics, Political Science, Sociology, and Psychology departments.",
       "building_type": "faculty"
     },
     {
       "id": 5,
       "name": "Faculty of Arts",
-      "latitude": 6.4640,
+      "latitude": 6.464,
       "longitude": 3.2335,
       "description": "Languages, History, Philosophy, and Creative Arts departments.",
       "building_type": "faculty"
@@ -108,7 +108,7 @@
       "id": 14,
       "name": "Post Graduate School",
       "latitude": 6.4668,
-      "longitude": 3.2360,
+      "longitude": 3.236,
       "description": "Post Graduate School - Exams and Records office.",
       "building_type": "faculty"
     },
@@ -203,7 +203,7 @@
     {
       "id": 26,
       "name": "Sports Complex",
-      "latitude": 6.4670,
+      "latitude": 6.467,
       "longitude": 3.2365,
       "description": "Hussam Okoya Sports Complex - Football field, basketball court, and indoor sports facilities.",
       "building_type": "sports"
@@ -260,14 +260,14 @@
       "id": 33,
       "name": "Student Affairs Complex",
       "latitude": 6.4656,
-      "longitude": 3.2340,
+      "longitude": 3.234,
       "description": "Student affairs administrative offices.",
       "building_type": "admin"
     },
     {
       "id": 34,
       "name": "Law Clinic",
-      "latitude": 6.4650,
+      "latitude": 6.465,
       "longitude": 3.2339,
       "description": "Legal clinic beside Vice Chancellor's Office.",
       "building_type": "facility"
@@ -299,7 +299,7 @@
     {
       "id": 38,
       "name": "Zenith Bank",
-      "latitude": 6.4660,
+      "latitude": 6.466,
       "longitude": 3.2342,
       "description": "Banking services on campus.",
       "building_type": "service"
@@ -316,7 +316,7 @@
       "id": 40,
       "name": "Wema Bank",
       "latitude": 6.4657,
-      "longitude": 3.2340,
+      "longitude": 3.234,
       "description": "Wema Bank branch and ATM on campus.",
       "building_type": "service"
     },
@@ -419,7 +419,7 @@
     {
       "id": 53,
       "name": "Eisa's Treats",
-      "latitude": 6.4650,
+      "latitude": 6.465,
       "longitude": 3.2341,
       "description": "Banana bread, cakes and desserts.",
       "building_type": "eatery"
@@ -460,7 +460,7 @@
       "id": 58,
       "name": "Trekk Scooters",
       "latitude": 6.4651,
-      "longitude": 3.2340,
+      "longitude": 3.234,
       "description": "Scooter rental service for campus mobility.",
       "building_type": "service"
     },
@@ -475,7 +475,7 @@
     {
       "id": 60,
       "name": "AutoMedics Limited",
-      "latitude": 6.4670,
+      "latitude": 6.467,
       "longitude": 3.2366,
       "description": "Car repair and maintenance service.",
       "building_type": "service"
@@ -484,7 +484,7 @@
       "id": 61,
       "name": "Pavilion",
       "latitude": 6.4666,
-      "longitude": 3.2360,
+      "longitude": 3.236,
       "description": "Open event space on campus.",
       "building_type": "facility"
     },
@@ -500,7 +500,7 @@
       "id": 63,
       "name": "Fish Farm",
       "latitude": 6.4675,
-      "longitude": 3.2370,
+      "longitude": 3.237,
       "description": "University fish farming project.",
       "building_type": "facility"
     },

@@ -63,6 +63,7 @@ class User(UserMixin, db.Model):
             'faculty': self.faculty,
             'department': self.department,
             'phone': self.phone,
+            'profile_image': self.profile_image,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'is_active': self.is_active

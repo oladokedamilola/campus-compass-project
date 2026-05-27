@@ -278,7 +278,7 @@
 <footer class="footer-section py-4 mt-5">
     <div class="container-standard">
         <div class="row g-4">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-5">
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <i class="fas fa-compass fa-lg" style="color: var(--campus-accent);"></i>
                     <span class="fw-bold">Campus Compass</span>
@@ -294,19 +294,25 @@
                     {% if current_user.is_authenticated %}
                         <li class="mb-2"><a href="{{ url_for('map.index') }}" class="text-white-50 text-decoration-none">Map</a></li>
                         <li class="mb-2"><a href="{{ url_for('dashboard.index') }}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+                        <li class="mb-2"><a href="{{ url_for('dashboard.favorites') }}" class="text-white-50 text-decoration-none">Favorites</a></li>
                         <li class="mb-2"><a href="{{ url_for('auth.logout') }}" class="text-white-50 text-decoration-none">Logout</a></li>
                     {% else %}
-                        <li class="mb-2"><a href="{{ url_for('auth.login_page') }}" class="text-white-50 text-decoration-none">Login</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.login_page') }}" class="text-white-50 text-decoration-none">Student Login</a></li>
                         <li class="mb-2"><a href="{{ url_for('auth.verify_matric_page') }}" class="text-white-50 text-decoration-none">Register</a></li>
                     {% endif %}
                 </ul>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <h6 class="mb-3">About</h6>
                 <p class="small text-white-50">
                     A Computer Science project for Lagos State University (LASU).<br>
                     Designed to help students and visitors navigate campus efficiently.
                 </p>
+                <div class="mt-2">
+                    <a href="{{ url_for('auth.staff_login_page') }}" class="small text-decoration-none" style="color: var(--campus-accent);">
+                        <i class="fas fa-user-shield me-1"></i>Staff Login
+                    </a>
+                </div>
             </div>
         </div>
         <div class="text-center mt-4 pt-3 border-top border-secondary">

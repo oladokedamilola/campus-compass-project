@@ -165,6 +165,17 @@
       "is_active": false,
       "has_registered": false,
       "status_note": "Graduated"
+    },
+    {
+      "matric_number": "220591095",
+      "full_name": "Awoniyi Azeez Adeola",
+      "email": "azeez.awoniyi@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Computer Science",
+      "phone": "08123456789",
+      "year_of_admission": 2022,
+      "is_active": true,
+      "has_registered": false
     }
   ]
 }

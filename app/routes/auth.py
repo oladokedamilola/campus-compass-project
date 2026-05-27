@@ -169,6 +169,76 @@ def login():
         }), 500
 
 
+
+@auth_bp.route('/staff-login', methods=['GET'])
+def staff_login_page():
+    """Render staff/admin login page"""
+    if current_user.is_authenticated:
+        if current_user.is_admin():
+            return redirect(url_for('admin.index'))
+        else:
+            return redirect(url_for('dashboard.index'))
+    return render_template('staff_login.html')
+
+
+@auth_bp.route('/staff-login', methods=['POST'])
+def staff_login():
+    """Process staff/admin login with matric number and password"""
+    try:
+        data = request.get_json()
+        matric_number = data.get('matric_number', '').strip().upper()
+        password = data.get('password', '')
+        remember = data.get('remember', False)
+        
+        # Validation
+        if not matric_number or not password:
+            return jsonify({
+                'success': False,
+                'message': 'Please enter both matric number and password'
+            }), 400
+        
+        # Find user by matric number
+        user = User.query.filter_by(matric_number=matric_number).first()
+        
+        # Check credentials
+        if not user or not user.check_password(password):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid credentials'
+            }), 401
+        
+        # Check if account is active
+        if not user.is_active:
+            return jsonify({
+                'success': False,
+                'message': 'This account has been deactivated. Please contact administration.'
+            }), 403
+        
+        # Check if user is admin/staff
+        if not user.is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Access denied. Staff login only.'
+            }), 403
+        
+        # Login successful
+        login_user(user, remember=remember)
+        user.update_last_login()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Welcome back, {user.full_name.split()[0]}!',
+            'redirect': url_for('admin.index'),
+            'user_type': user.user_type
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred. Please try again.'
+        }), 500
+
+
 @auth_bp.route('/register', methods=['GET'])
 def register_page():
     """Render registration page (after matric verification)"""

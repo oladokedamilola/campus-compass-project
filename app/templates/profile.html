@@ -61,12 +61,7 @@
     color: white;
 }
 
-/* Profile Image Modal */
-.profile-image-modal .modal-content {
-    max-width: 400px;
-    margin: 0 auto;
-}
-
+/* Modal styles */
 .image-preview-container {
     background: var(--campus-gray-800);
     border-radius: 50%;
@@ -199,12 +194,16 @@
 
 {% block content %}
 <div class="profile-container">
+    <!-- Hidden CSRF token for AJAX -->
+    <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+    
     <div class="row g-4">
         <!-- Profile Card -->
         <div class="col-12 col-md-4">
             <div class="campus-glass-card p-4 text-center">
-                <!-- Avatar - Click to open modal -->
-                <div class="user-avatar-large mx-auto mb-3" id="avatarContainer" data-bs-toggle="modal" data-bs-target="#profileImageModal">
+                <!-- Avatar - Click to upload -->
+                <div class="user-avatar-large mx-auto mb-3" id="avatarContainer">
+                    <input type="file" id="fileInput" accept="image/jpeg, image/png, image/jpg, image/gif" style="display: none;">
                     {% if user.profile_image %}
                         <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile" id="profileImage" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
@@ -242,8 +241,6 @@
                 </h3>
                 
                 <form id="profileForm">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
                     <div class="mb-3">
                         <label class="form-label text-white">Full Name</label>
                         <input type="text" class="form-control form-control-campus readonly-field" 
@@ -314,40 +311,6 @@
     </div>
 </div>
 
-<!-- Profile Image Modal (Preview & Upload) -->
-<div class="modal fade profile-image-modal" id="profileImageModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content campus-glass-card">
-            <div class="modal-header border-0">
-                <h5 class="modal-title">
-                    <i class="fas fa-camera me-2" style="color: var(--campus-accent);"></i>
-                    Profile Picture
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="image-preview-container" id="modalImagePreview">
-                    {% if user.profile_image %}
-                        <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile Preview" id="modalPreviewImage">
-                    {% else %}
-                        <i class="fas fa-user" id="modalPreviewIcon"></i>
-                    {% endif %}
-                </div>
-                <div class="image-actions">
-                    <button type="button" class="btn btn-campus-outline-light" id="changeImageBtn">
-                        <i class="fas fa-upload me-2"></i>Change
-                    </button>
-                    <button type="button" class="btn btn-campus-accent" id="confirmImageBtn">
-                        <i class="fas fa-check me-2"></i>Confirm
-                    </button>
-                </div>
-                <input type="file" id="profileImageInput" class="hidden-file-input" style="display: none;" accept="image/jpeg, image/png, image/jpg, image/gif">
-                <small class="text-white-50 mt-2 d-block">Supported formats: JPG, PNG, GIF (Max 2MB)</small>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Delete Account Modal -->
 <div class="modal fade" id="deleteAccountModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -378,45 +341,24 @@
 {% block extra_js %}
 <script>
 // ============================================
-// PROFILE IMAGE UPLOAD WITH PREVIEW MODAL
+// SIMPLE IMAGE UPLOAD - NO MODAL
 // ============================================
 
-let selectedImageFile = null;
-
-// Get CSRF token
 function getCsrfToken() {
-    const token = document.querySelector('[name=csrf_token]');
+    const token = document.getElementById('csrfToken');
     return token ? token.value : '';
 }
 
-// Open modal and reset preview
-const profileImageModal = document.getElementById('profileImageModal');
-profileImageModal.addEventListener('show.bs.modal', function() {
-    // Reset preview to current image
-    const currentImg = document.getElementById('profileImage');
-    const currentIcon = document.getElementById('profileIcon');
-    const modalImg = document.getElementById('modalPreviewImage');
-    const modalIcon = document.getElementById('modalPreviewIcon');
-    
-    if (currentImg && currentImg.src && currentImg.style.display !== 'none') {
-        modalImg.src = currentImg.src;
-        modalImg.style.display = 'block';
-        modalIcon.style.display = 'none';
-    } else {
-        modalImg.style.display = 'none';
-        modalIcon.style.display = 'flex';
-    }
-    
-    selectedImageFile = null;
+// Handle avatar click to open file picker
+const avatarContainer = document.getElementById('avatarContainer');
+const fileInput = document.getElementById('fileInput');
+
+avatarContainer.addEventListener('click', function() {
+    fileInput.click();
 });
 
-// Change image button - open file picker
-document.getElementById('changeImageBtn').addEventListener('click', function() {
-    document.getElementById('profileImageInput').click();
-});
-
-// Handle file selection and preview
-document.getElementById('profileImageInput').addEventListener('change', function(e) {
+// Handle file selection and upload
+fileInput.addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -430,37 +372,13 @@ document.getElementById('profileImageInput').addEventListener('change', function
         return;
     }
     
-    selectedImageFile = file;
-    
-    // Preview in modal
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const modalImg = document.getElementById('modalPreviewImage');
-        const modalIcon = document.getElementById('modalPreviewIcon');
-        
-        modalImg.src = event.target.result;
-        modalImg.style.display = 'block';
-        modalIcon.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-});
-
-// Confirm image button - upload the selected image
-document.getElementById('confirmImageBtn').addEventListener('click', async function() {
-    if (!selectedImageFile) {
-        // No image selected, just close modal
-        bootstrap.Modal.getInstance(profileImageModal).hide();
-        return;
-    }
+    // Show loading spinner
+    const originalContent = avatarContainer.innerHTML;
+    avatarContainer.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 3rem;"></i>';
     
     const formData = new FormData();
-    formData.append('profile_image', selectedImageFile);
+    formData.append('profile_image', file);
     formData.append('csrf_token', getCsrfToken());
-    
-    const btn = this;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
-    btn.disabled = true;
     
     try {
         const response = await fetch('/upload/profile-image', {
@@ -471,23 +389,14 @@ document.getElementById('confirmImageBtn').addEventListener('click', async funct
         const data = await response.json();
         
         if (data.success) {
-            // Update avatar on profile card
-            const avatarContainer = document.getElementById('avatarContainer');
             avatarContainer.innerHTML = `<img src="${data.image_url}?t=${Date.now()}" style="width: 100%; height: 100%; object-fit: cover;"><div class="avatar-overlay"><i class="fas fa-camera"></i></div>`;
-            
-            // Also update the modal preview source for next time
-            const modalImg = document.getElementById('modalPreviewImage');
-            modalImg.src = data.image_url;
-            
             if (typeof notify !== 'undefined') {
                 notify.success('Profile picture updated!');
             } else {
                 alert('Profile picture updated!');
             }
-            
-            // Close modal
-            bootstrap.Modal.getInstance(profileImageModal).hide();
         } else {
+            avatarContainer.innerHTML = originalContent;
             if (typeof notify !== 'undefined') {
                 notify.error(data.message);
             } else {
@@ -496,16 +405,16 @@ document.getElementById('confirmImageBtn').addEventListener('click', async funct
         }
     } catch (error) {
         console.error('Upload error:', error);
+        avatarContainer.innerHTML = originalContent;
         if (typeof notify !== 'undefined') {
             notify.error('Network error. Please try again.');
         } else {
             alert('Network error. Please try again.');
         }
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        selectedImageFile = null;
     }
+    
+    // Clear the file input
+    fileInput.value = '';
 });
 
 // ============================================
@@ -523,23 +432,34 @@ function checkPasswordStrength(pw) {
     
     let score = (hasLength ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
     
-    document.getElementById('constraint-length').classList.toggle('valid', hasLength);
-    document.getElementById('constraint-uppercase').classList.toggle('valid', hasUpper);
-    document.getElementById('constraint-number').classList.toggle('valid', hasNumber);
-    document.getElementById('constraint-special').classList.toggle('valid', hasSpecial);
+    const lengthItem = document.getElementById('constraint-length');
+    const upperItem = document.getElementById('constraint-uppercase');
+    const numberItem = document.getElementById('constraint-number');
+    const specialItem = document.getElementById('constraint-special');
     
-    // Update icons
-    document.getElementById('constraint-length').querySelector('i').className = hasLength ? 'fas fa-check-circle' : 'fas fa-circle-notch';
-    document.getElementById('constraint-uppercase').querySelector('i').className = hasUpper ? 'fas fa-check-circle' : 'fas fa-circle-notch';
-    document.getElementById('constraint-number').querySelector('i').className = hasNumber ? 'fas fa-check-circle' : 'fas fa-circle-notch';
-    document.getElementById('constraint-special').querySelector('i').className = hasSpecial ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    if (lengthItem) {
+        lengthItem.classList.toggle('valid', hasLength);
+        lengthItem.querySelector('i').className = hasLength ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    }
+    if (upperItem) {
+        upperItem.classList.toggle('valid', hasUpper);
+        upperItem.querySelector('i').className = hasUpper ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    }
+    if (numberItem) {
+        numberItem.classList.toggle('valid', hasNumber);
+        numberItem.querySelector('i').className = hasNumber ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    }
+    if (specialItem) {
+        specialItem.classList.toggle('valid', hasSpecial);
+        specialItem.querySelector('i').className = hasSpecial ? 'fas fa-check-circle' : 'fas fa-circle-notch';
+    }
     
     // Strength bar
     const bar = document.getElementById('strengthProgress');
     const text = document.getElementById('strengthText');
     const container = document.getElementById('passwordStrengthContainer');
     
-    if (pw.length > 0) {
+    if (pw.length > 0 && bar && text && container) {
         container.style.display = 'block';
         let percent = 0, level = '', color = '';
         if (score <= 1) { percent = 25; level = 'Weak'; color = '#FF1744'; }
@@ -550,20 +470,26 @@ function checkPasswordStrength(pw) {
         bar.style.width = percent + '%';
         bar.style.background = color;
         text.innerHTML = `<span style="color: ${color};">🔒 ${level}</span>`;
-    } else {
+    } else if (container) {
         container.style.display = 'none';
     }
 }
 
 async function checkPasswordDifferent() {
-    const current = document.getElementById('current_password').value;
-    const newPw = document.getElementById('new_password').value;
+    const current = document.getElementById('current_password');
+    const newPw = document.getElementById('new_password');
     const diffDiv = document.getElementById('passwordDifferentCheck');
     
-    if (!current || !newPw) {
+    if (!current || !newPw || !diffDiv) return;
+    
+    const currentValue = current.value;
+    const newValue = newPw.value;
+    
+    if (!currentValue || !newValue) {
         diffDiv.style.display = 'none';
-        document.getElementById('new_password').style.borderColor = '';
-        document.getElementById('confirm_new_password').disabled = true;
+        if (newPw) newPw.style.borderColor = '';
+        const confirmField = document.getElementById('confirm_new_password');
+        if (confirmField) confirmField.disabled = true;
         isPasswordValid = false;
         return;
     }
@@ -575,21 +501,23 @@ async function checkPasswordDifferent() {
         const res = await fetch('/dashboard/profile/check-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-            body: JSON.stringify({ current_password: current, new_password: newPw })
+            body: JSON.stringify({ current_password: currentValue, new_password: newValue })
         });
         const data = await res.json();
         
         if (data.is_same) {
             diffDiv.className = 'password-different-check invalid';
             diffDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> New password must be different from current';
-            document.getElementById('new_password').style.borderColor = '#FF1744';
-            document.getElementById('confirm_new_password').disabled = true;
+            if (newPw) newPw.style.borderColor = '#FF1744';
+            const confirmField = document.getElementById('confirm_new_password');
+            if (confirmField) confirmField.disabled = true;
             isPasswordValid = false;
         } else {
             diffDiv.className = 'password-different-check valid';
             diffDiv.innerHTML = '<i class="fas fa-check-circle"></i> New password is different';
-            document.getElementById('new_password').style.borderColor = '#00E676';
-            document.getElementById('confirm_new_password').disabled = false;
+            if (newPw) newPw.style.borderColor = '#00E676';
+            const confirmField = document.getElementById('confirm_new_password');
+            if (confirmField) confirmField.disabled = false;
             isPasswordValid = true;
         }
     } catch(e) {
@@ -599,16 +527,18 @@ async function checkPasswordDifferent() {
 }
 
 function checkPasswordMatch() {
-    const pw = document.getElementById('new_password').value;
-    const confirm = document.getElementById('confirm_new_password').value;
+    const pw = document.getElementById('new_password');
+    const confirm = document.getElementById('confirm_new_password');
     const matchDiv = document.getElementById('passwordMatch');
     
-    if (!isPasswordValid || confirm.length === 0) {
+    if (!pw || !confirm || !matchDiv) return false;
+    
+    if (!isPasswordValid || confirm.value.length === 0) {
         matchDiv.innerHTML = '';
         return false;
     }
     
-    if (pw === confirm) {
+    if (pw.value === confirm.value) {
         matchDiv.innerHTML = '<span style="color: #00E676;">✓ Passwords match</span>';
         return true;
     } else {
@@ -618,120 +548,145 @@ function checkPasswordMatch() {
 }
 
 // Event listeners
-const newPw = document.getElementById('new_password');
-newPw.addEventListener('input', () => {
-    checkPasswordStrength(newPw.value);
-    if (passwordDebounce) clearTimeout(passwordDebounce);
-    passwordDebounce = setTimeout(checkPasswordDifferent, 500);
-    checkPasswordMatch();
-});
-
-document.getElementById('confirm_new_password').addEventListener('input', checkPasswordMatch);
-document.getElementById('current_password').addEventListener('input', () => {
-    if (newPw.value) {
+const newPwField = document.getElementById('new_password');
+if (newPwField) {
+    newPwField.addEventListener('input', () => {
+        checkPasswordStrength(newPwField.value);
         if (passwordDebounce) clearTimeout(passwordDebounce);
         passwordDebounce = setTimeout(checkPasswordDifferent, 500);
-    }
-});
+        checkPasswordMatch();
+    });
+}
+
+const confirmPwField = document.getElementById('confirm_new_password');
+if (confirmPwField) {
+    confirmPwField.addEventListener('input', checkPasswordMatch);
+}
+
+const currentPwField = document.getElementById('current_password');
+if (currentPwField) {
+    currentPwField.addEventListener('input', () => {
+        if (newPwField && newPwField.value) {
+            if (passwordDebounce) clearTimeout(passwordDebounce);
+            passwordDebounce = setTimeout(checkPasswordDifferent, 500);
+        }
+    });
+}
 
 // Password constraints panel
-newPw.addEventListener('focus', () => {
-    document.getElementById('passwordConstraints').style.display = 'block';
-});
-newPw.addEventListener('blur', () => {
-    setTimeout(() => {
-        document.getElementById('passwordConstraints').style.display = 'none';
-    }, 200);
-});
+if (newPwField) {
+    const constraintsPanel = document.getElementById('passwordConstraints');
+    newPwField.addEventListener('focus', () => {
+        if (constraintsPanel) constraintsPanel.style.display = 'block';
+    });
+    newPwField.addEventListener('blur', () => {
+        setTimeout(() => {
+            if (constraintsPanel) constraintsPanel.style.display = 'none';
+        }, 200);
+    });
+}
 
 // Form submission
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const btn = document.getElementById('updateBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
-    btn.disabled = true;
-    
-    const data = {
-        current_password: document.getElementById('current_password').value,
-        new_password: document.getElementById('new_password').value,
-        confirm_new_password: document.getElementById('confirm_new_password').value
-    };
-    
-    if (data.new_password && data.new_password !== data.confirm_new_password) {
-        alert('Passwords do not match');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        return;
-    }
-    
-    if (data.new_password && data.new_password.length < 6) {
-        alert('Password must be at least 6 characters');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        return;
-    }
-    
-    try {
-        const res = await fetch('/dashboard/profile/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
+const profileForm = document.getElementById('profileForm');
+if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        if (result.success) {
-            alert('Password updated successfully!');
-            document.getElementById('current_password').value = '';
-            document.getElementById('new_password').value = '';
-            document.getElementById('confirm_new_password').value = '';
-            document.getElementById('confirm_new_password').disabled = true;
-            if (data.new_password) setTimeout(() => window.location.reload(), 1500);
-        } else {
-            alert(result.message);
+        const btn = document.getElementById('updateBtn');
+        if (!btn) return;
+        
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+        btn.disabled = true;
+        
+        const data = {
+            current_password: document.getElementById('current_password') ? document.getElementById('current_password').value : '',
+            new_password: document.getElementById('new_password') ? document.getElementById('new_password').value : '',
+            confirm_new_password: document.getElementById('confirm_new_password') ? document.getElementById('confirm_new_password').value : ''
+        };
+        
+        if (data.new_password && data.new_password !== data.confirm_new_password) {
+            alert('Passwords do not match');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
         }
-    } catch(e) {
-        alert('Network error');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-});
+        
+        if (data.new_password && data.new_password.length < 6) {
+            alert('Password must be at least 6 characters');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+        
+        try {
+            const res = await fetch('/dashboard/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                alert('Password updated successfully!');
+                if (document.getElementById('current_password')) document.getElementById('current_password').value = '';
+                if (document.getElementById('new_password')) document.getElementById('new_password').value = '';
+                if (document.getElementById('confirm_new_password')) {
+                    document.getElementById('confirm_new_password').value = '';
+                    document.getElementById('confirm_new_password').disabled = true;
+                }
+                if (data.new_password) setTimeout(() => window.location.reload(), 1500);
+            } else {
+                alert(result.message);
+            }
+        } catch(e) {
+            alert('Network error');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+}
 
 // Delete account
-document.getElementById('confirm-delete-account-btn').addEventListener('click', async () => {
-    const password = document.getElementById('delete_password').value;
-    if (!password) {
-        alert('Enter your password to confirm');
-        return;
-    }
-    
-    const btn = document.getElementById('confirm-delete-account-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-    
-    try {
-        const res = await fetch('/dashboard/profile/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-            body: JSON.stringify({ password: password })
-        });
-        const result = await res.json();
+const deleteAccountBtn = document.getElementById('confirm-delete-account-btn');
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', async () => {
+        const passwordInput = document.getElementById('delete_password');
+        if (!passwordInput) return;
         
-        if (result.success) {
-            alert(result.message);
-            window.location.href = '/';
-        } else {
-            alert(result.message);
+        const password = passwordInput.value;
+        if (!password) {
+            alert('Enter your password to confirm');
+            return;
+        }
+        
+        const btn = deleteAccountBtn;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        try {
+            const res = await fetch('/dashboard/profile/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                body: JSON.stringify({ password: password })
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                alert(result.message);
+                window.location.href = '/';
+            } else {
+                alert(result.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Permanently Delete';
+            }
+        } catch(e) {
+            alert('Network error');
             btn.disabled = false;
             btn.innerHTML = 'Permanently Delete';
         }
-    } catch(e) {
-        alert('Network error');
-        btn.disabled = false;
-        btn.innerHTML = 'Permanently Delete';
-    }
-});
+    });
+}
 </script>
 {% endblock %}

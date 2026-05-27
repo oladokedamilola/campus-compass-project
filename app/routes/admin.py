@@ -90,17 +90,20 @@ def edit_user(user_id):
             return jsonify({'success': False, 'message': 'User not found'}), 404
         
         data = request.get_json()
+        print(f"Edit user data received: {data}")  # Debug log
         
         # Update fields
         if 'full_name' in data and data['full_name']:
             user.full_name = data['full_name']
         
-        if 'email' in data and data['email']:
-            # Check if email is taken by another user
-            existing = User.query.filter(User.email == data['email'], User.id != user_id).first()
+        # Update matric_number if provided and not already taken
+        if 'matric_number' in data and data['matric_number']:
+            matric = data['matric_number'].strip().upper()
+            # Check if matric number is taken by another user
+            existing = User.query.filter(User.matric_number == matric, User.id != user_id).first()
             if existing:
-                return jsonify({'success': False, 'message': 'Email already in use'}), 400
-            user.email = data['email']
+                return jsonify({'success': False, 'message': 'Matric number already in use'}), 400
+            user.matric_number = matric
         
         if 'user_type' in data and data['user_type'] in ['student', 'admin']:
             user.user_type = data['user_type']
@@ -114,14 +117,18 @@ def edit_user(user_id):
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        print(f"Edit user error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+    
 
 
 @admin_bp.route('/users/<int:user_id>/delete', methods=['DELETE'])
 @login_required
 @admin_required
 def delete_user(user_id):
-    """Delete user (soft delete)"""
+    """Delete user (soft delete with option for hard delete)"""
     try:
         user = User.query.get(user_id)
         if not user:
@@ -131,16 +138,108 @@ def delete_user(user_id):
         if user.id == current_user.id:
             return jsonify({'success': False, 'message': 'You cannot delete your own account'}), 400
         
-        # Soft delete
+        # Prevent deleting the last admin
+        if user.is_admin():
+            admin_count = User.query.filter_by(user_type='admin', is_active=True).count()
+            if admin_count <= 1:
+                return jsonify({'success': False, 'message': 'Cannot delete the last admin account'}), 400
+        
+        # Store user info for response message
+        user_name = user.full_name
+        user_matric = user.matric_number
+        
+        # Soft delete - deactivate account
         user.is_active = False
         db.session.commit()
         
-        return jsonify({'success': True, 'message': f'User {user.full_name} has been deactivated'})
+        return jsonify({
+            'success': True, 
+            'message': f'User {user_name} ({user_matric}) has been deactivated'
+        })
         
     except Exception as e:
         db.session.rollback()
+        print(f"Delete user error: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while deleting the user'}), 500
+
+
+@admin_bp.route('/users/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+@admin_required
+def toggle_user_status(user_id):
+    """Toggle user active status (enable/disable)"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Prevent admin from deactivating themselves
+        if user.id == current_user.id:
+            return jsonify({'success': False, 'message': 'You cannot change your own status'}), 400
+        
+        # Prevent deactivating the last admin
+        if user.is_admin() and user.is_active:
+            admin_count = User.query.filter_by(user_type='admin', is_active=True).count()
+            if admin_count <= 1:
+                return jsonify({'success': False, 'message': 'Cannot deactivate the last admin account'}), 400
+        
+        data = request.get_json()
+        new_status = data.get('is_active', False)
+        
+        user.is_active = new_status
+        db.session.commit()
+        
+        status_text = 'activated' if new_status else 'deactivated'
+        return jsonify({
+            'success': True,
+            'message': f'User {user.full_name} has been {status_text}'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Toggle status error: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
+@admin_bp.route('/users/<int:user_id>/hard-delete', methods=['DELETE'])
+@login_required
+@admin_required
+def hard_delete_user(user_id):
+    """Permanently delete user (hard delete)"""
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Prevent admin from deleting themselves
+        if user.id == current_user.id:
+            return jsonify({'success': False, 'message': 'You cannot delete your own account'}), 400
+        
+        # Prevent deleting the last admin
+        if user.is_admin():
+            admin_count = User.query.filter_by(user_type='admin', is_active=True).count()
+            if admin_count <= 1:
+                return jsonify({'success': False, 'message': 'Cannot delete the last admin account'}), 400
+        
+        user_name = user.full_name
+        user_matric = user.matric_number
+        
+        # Delete user's saved locations first
+        SavedLocation.query.filter_by(user_id=user_id).delete()
+        
+        # Hard delete the user
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'User {user_name} ({user_matric}) has been permanently deleted'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Hard delete error: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # ==================== CAMPUS DATA MANAGEMENT APIS ====================
 

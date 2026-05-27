@@ -3,17 +3,137 @@
 {% block title %}Manage Users{% endblock %}
 {% block topbar_title %}Manage Users{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Responsive table container */
+.table-responsive-custom {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.action-buttons .btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.75rem;
+}
+
+/* Table styling */
+.table {
+    margin-bottom: 0;
+    font-size: 0.85rem;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.table th {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* Status badge */
+.badge-active {
+    background-color: #00E676;
+    color: #0D0D0D;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+}
+
+.badge-inactive {
+    background-color: #757575;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .table th, 
+    .table td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .action-buttons .btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .badge-active, .badge-inactive {
+        padding: 2px 6px;
+        font-size: 0.65rem;
+    }
+    
+    .search-filter-bar {
+        flex-direction: column;
+    }
+    
+    .search-filter-bar .d-flex {
+        width: 100%;
+    }
+    
+    #searchInput {
+        width: 100% !important;
+    }
+}
+
+/* Search and filter bar */
+.search-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .search-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-filter-bar .d-flex {
+        justify-content: stretch;
+    }
+    
+    #searchInput, #filterType {
+        width: 100% !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="admin-users-container">
-    <div class="campus-glass-card p-4">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <!-- Hidden CSRF token for the page -->
+    <input type="hidden" id="globalCsrfToken" value="{{ csrf_token() }}">
+    
+    <div class="campus-glass-card p-3 p-md-4">
+        <div class="search-filter-bar mb-4">
             <h4 class="mb-0">
                 <i class="fas fa-users me-2" style="color: var(--campus-accent);"></i>
                 Registered Users
             </h4>
             <div class="d-flex gap-2">
                 <input type="text" id="searchInput" class="form-control form-control-campus" 
-                       placeholder="Search by name or email..." style="width: 250px;">
+                       placeholder="Search by name or matric number..." style="width: 250px;">
                 <select id="filterType" class="form-control form-control-campus" style="width: 130px;">
                     <option value="all">All Users</option>
                     <option value="student">Students</option>
@@ -25,10 +145,12 @@
             </div>
         </div>
         
-        <div id="usersList">
-            <div class="text-center py-5">
-                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                <p class="mt-2 text-white-50">Loading users...</p>
+        <div class="table-responsive-custom">
+            <div id="usersList">
+                <div class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2 text-white-50">Loading users...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -52,14 +174,22 @@
                     <input type="text" id="editFullName" class="form-control form-control-campus">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-white">Email</label>
-                    <input type="email" id="editEmail" class="form-control form-control-campus">
+                    <label class="form-label text-white">Matric Number / Staff ID</label>
+                    <input type="text" id="editMatricNumber" class="form-control form-control-campus">
+                    <small class="text-white-50">Unique identifier for login</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-white">User Type</label>
                     <select id="editUserType" class="form-control form-control-campus">
                         <option value="student">Student</option>
                         <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white">Account Status</label>
+                    <select id="editUserStatus" class="form-control form-control-campus">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive (Graduated/Disabled)</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -71,7 +201,7 @@
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-campus-outline-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-campus-accent" onclick="saveUser()">Save Changes</button>
+                <button type="button" class="btn btn-campus-accent" id="saveUserBtn">Save Changes</button>
             </div>
         </div>
     </div>
@@ -89,12 +219,19 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
-                <p class="text-white-50 small">This action cannot be undone. All user data will be permanently removed.</p>
+                <p>Are you sure you want to <strong class="text-danger">permanently delete</strong> <strong id="deleteUserName"></strong>?</p>
+                <p class="text-white-50 small">⚠️ This action cannot be undone. All user data and favorites will be permanently removed.</p>
+                <hr>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmHardDelete">
+                    <label class="form-check-label text-white-50 small" for="confirmHardDelete">
+                        I understand that this action is irreversible
+                    </label>
+                </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-campus-outline-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">Delete Permanently</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>Permanently Delete</button>
             </div>
         </div>
     </div>
@@ -105,6 +242,27 @@
 <script>
 let currentDeleteId = null;
 let allUsers = [];
+
+// Get CSRF token from multiple possible sources
+function getCsrfToken() {
+    let token = document.getElementById('globalCsrfToken');
+    if (token && token.value) return token.value;
+    token = document.querySelector('[name=csrf_token]');
+    if (token && token.value) return token.value;
+    console.error("No CSRF token found!");
+    return '';
+}
+
+// Enable/disable delete button based on checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmHardDelete');
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmCheckbox && deleteBtn) {
+        confirmCheckbox.addEventListener('change', function() {
+            deleteBtn.disabled = !this.checked;
+        });
+    }
+});
 
 async function loadUsers() {
     const search = document.getElementById('searchInput').value.toLowerCase();
@@ -117,15 +275,13 @@ async function loadUsers() {
         
         let filteredUsers = allUsers;
         
-        // Apply search filter
         if (search) {
             filteredUsers = filteredUsers.filter(u => 
                 u.full_name.toLowerCase().includes(search) || 
-                u.email.toLowerCase().includes(search)
+                (u.matric_number && u.matric_number.toLowerCase().includes(search))
             );
         }
         
-        // Apply type filter
         if (filter !== 'all') {
             filteredUsers = filteredUsers.filter(u => u.user_type === filter);
         }
@@ -143,10 +299,11 @@ async function loadUsers() {
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
+                            <th>Matric/ID</th>
                             <th>Type</th>
+                            <th>Status</th>
+                            <th>Faculty</th>
                             <th>Joined</th>
-                            <th>Last Login</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -154,16 +311,24 @@ async function loadUsers() {
                         ${filteredUsers.map(user => `
                             <tr>
                                 <td>${escapeHtml(user.full_name)}</td>
-                                <td>${escapeHtml(user.email)}</td>
+                                <td><code>${escapeHtml(user.matric_number || 'N/A')}</code></td>
                                 <td><span class="badge ${user.user_type === 'admin' ? 'bg-warning' : 'bg-info'}">${user.user_type}</span></td>
-                                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
-                                <td>${user.last_login ? new Date(user.last_login).toLocaleDateString() : '-'}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-campus-outline-light me-1" onclick="openEditModal(${user.id})">
+                                    <span class="${user.is_active ? 'badge-active' : 'badge-inactive'}">
+                                        ${user.is_active ? '● Active' : '○ Inactive'}
+                                    </span>
+                                </td>
+                                <td>${escapeHtml(user.faculty || '-')}</td>
+                                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-sm btn-campus-outline-light" onclick="openEditModal(${user.id})" title="Edit User">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${escapeHtml(user.full_name)}')">
-                                        <i class="fas fa-trash"></i>
+                                    <button class="btn btn-sm ${user.is_active ? 'btn-warning' : 'btn-success'}" onclick="toggleUserStatus(${user.id}, ${!user.is_active})" title="${user.is_active ? 'Deactivate User' : 'Activate User'}">
+                                        <i class="fas ${user.is_active ? 'fa-ban' : 'fa-check-circle'}"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${user.id}, '${escapeHtml(user.full_name)}')" title="Permanently Delete">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -184,21 +349,63 @@ function openEditModal(userId) {
     
     document.getElementById('editUserId').value = user.id;
     document.getElementById('editFullName').value = user.full_name;
-    document.getElementById('editEmail').value = user.email;
+    document.getElementById('editMatricNumber').value = user.matric_number || '';
     document.getElementById('editUserType').value = user.user_type;
+    document.getElementById('editUserStatus').value = user.is_active ? 'active' : 'inactive';
     document.getElementById('editPassword').value = '';
     
-    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    const action = newStatus ? 'activate' : 'deactivate';
+    if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+    
+    const csrfToken = getCsrfToken();
+    
+    try {
+        const response = await fetch(`/admin/users/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ is_active: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (typeof notify !== 'undefined') notify.success(result.message);
+            else alert(result.message);
+            loadUsers();
+        } else {
+            if (typeof notify !== 'undefined') notify.error(result.message);
+            else alert(result.message);
+        }
+    } catch (error) {
+        console.error('Toggle status error:', error);
+        if (typeof notify !== 'undefined') notify.error('Failed to update user status');
+        else alert('Failed to update user status');
+    }
 }
 
 async function saveUser() {
     const userId = document.getElementById('editUserId').value;
     const fullName = document.getElementById('editFullName').value;
-    const email = document.getElementById('editEmail').value;
+    const matricNumber = document.getElementById('editMatricNumber').value;
     const userType = document.getElementById('editUserType').value;
+    const userStatus = document.getElementById('editUserStatus').value;
     const password = document.getElementById('editPassword').value;
+    const csrfToken = getCsrfToken();
     
-    const btn = event.target;
+    if (!csrfToken) {
+        if (typeof notify !== 'undefined') notify.error('Security token missing. Please refresh the page.');
+        return;
+    }
+    
+    const btn = document.getElementById('saveUserBtn');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
@@ -208,12 +415,13 @@ async function saveUser() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
                 full_name: fullName,
-                email: email,
+                matric_number: matricNumber,
                 user_type: userType,
+                is_active: userStatus === 'active',
                 password: password
             })
         });
@@ -221,14 +429,20 @@ async function saveUser() {
         const result = await response.json();
         
         if (result.success) {
-            notify.success(result.message);
-            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            if (typeof notify !== 'undefined') notify.success(result.message);
+            else alert(result.message);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+            if (modal) modal.hide();
             loadUsers();
         } else {
-            notify.error(result.message);
+            if (typeof notify !== 'undefined') notify.error(result.message);
+            else alert(result.message);
         }
     } catch (error) {
-        notify.error('Failed to save user');
+        console.error('Save user error:', error);
+        if (typeof notify !== 'undefined') notify.error('Failed to save user');
+        else alert('Failed to save user');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -238,36 +452,50 @@ async function saveUser() {
 function openDeleteModal(userId, userName) {
     currentDeleteId = userId;
     document.getElementById('deleteUserName').textContent = userName;
-    new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+    // Reset checkbox and button
+    const checkbox = document.getElementById('confirmHardDelete');
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+    if (checkbox) checkbox.checked = false;
+    if (deleteBtn) deleteBtn.disabled = true;
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    modal.show();
 }
 
 async function confirmDeleteUser() {
     if (!currentDeleteId) return;
     
-    const btn = event.target;
+    const csrfToken = getCsrfToken();
+    
+    const btn = document.getElementById('confirmDeleteBtn');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     btn.disabled = true;
     
     try {
-        const response = await fetch(`/admin/users/${currentDeleteId}/delete`, {
+        const response = await fetch(`/admin/users/${currentDeleteId}/hard-delete`, {
             method: 'DELETE',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+                'X-CSRFToken': csrfToken
             }
         });
         
         const result = await response.json();
         
         if (result.success) {
-            notify.success(result.message);
-            bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+            if (typeof notify !== 'undefined') notify.success(result.message);
+            else alert(result.message);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+            if (modal) modal.hide();
             loadUsers();
         } else {
-            notify.error(result.message);
+            if (typeof notify !== 'undefined') notify.error(result.message);
+            else alert(result.message);
         }
     } catch (error) {
-        notify.error('Failed to delete user');
+        console.error('Delete user error:', error);
+        if (typeof notify !== 'undefined') notify.error('Failed to delete user');
+        else alert('Failed to delete user');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -279,7 +507,24 @@ async function confirmDeleteUser() {
 document.getElementById('searchInput').addEventListener('input', loadUsers);
 document.getElementById('filterType').addEventListener('change', loadUsers);
 
+// Save button event listener
+const saveBtn = document.getElementById('saveUserBtn');
+if (saveBtn) {
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    newSaveBtn.addEventListener('click', saveUser);
+}
+
+// Delete button event listener
+const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+if (confirmDeleteBtn) {
+    const newDeleteBtn = confirmDeleteBtn.cloneNode(true);
+    confirmDeleteBtn.parentNode.replaceChild(newDeleteBtn, confirmDeleteBtn);
+    newDeleteBtn.addEventListener('click', confirmDeleteUser);
+}
+
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;

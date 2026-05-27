@@ -96,8 +96,34 @@
         }
         
         .feature-list li i {
-            color: #00E676;
             width: 20px;
+        }
+        
+        .feature-list li i.fa-check-circle {
+            color: #00E676;
+        }
+        
+        .feature-list li i.fa-exclamation-triangle {
+            color: #FFD600;
+        }
+        
+        .feature-list li i.fa-times-circle {
+            color: #FF1744;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .warning-text {
+            color: #FFD600;
+            font-size: 12px;
+            margin-top: 16px;
         }
         
         @media (max-width: 600px) {
@@ -113,21 +139,27 @@
         </div>
         <h1>You're Offline</h1>
         <p>
-            Don't worry! You can still access your saved favorites 
-            and previously loaded campus data.
+            Please check your internet connection and try again.<br>
+            Most features require an active internet connection.
         </p>
         <button class="btn-retry" onclick="window.location.reload()">
             <i class="fas fa-sync-alt"></i> Try Again
         </button>
         
         <div class="offline-features">
-            <h3>Available Offline:</h3>
+            <h3>What You Can Do Offline:</h3>
             <ul class="feature-list">
-                <li><i class="fas fa-check-circle"></i> View saved favorites</li>
-                <li><i class="fas fa-check-circle"></i> Access cached campus map</li>
-                <li><i class="fas fa-check-circle"></i> Previously searched locations</li>
-                <li><i class="fas fa-check-circle"></i> Campus building information</li>
+                <li><i class="fas fa-check-circle"></i> View this offline page</li>
+                <li><i class="fas fa-check-circle"></i> Saved favorites (if previously loaded)</li>
+                <li><i class="fas fa-times-circle"></i> Navigate the map (requires internet)</li>
+                <li><i class="fas fa-times-circle"></i> Search for buildings (requires internet)</li>
+                <li><i class="fas fa-times-circle"></i> Get directions (requires internet)</li>
+                <li><i class="fas fa-times-circle"></i> Log in or register (requires internet)</li>
             </ul>
+        </div>
+        
+        <div class="warning-text">
+            <i class="fas fa-info-circle"></i> Reconnect to the internet to use all Campus Compass features.
         </div>
     </div>
     
