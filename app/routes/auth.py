@@ -4,7 +4,7 @@ Matric Number-based Authentication System
 Students verify with matric number first, then create password
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import User, StudentUniversity, PasswordResetRequest
@@ -14,18 +14,33 @@ from datetime import datetime
 auth_bp = Blueprint('auth', __name__)
 
 def is_valid_matric_number(matric):
-    """Validate matric number format (LASU format: YYYY + 5 random digits)"""
+    """
+    Validate matric number format.
+    Accepts two formats:
+    1. YYYY + 5 digits (total 9 digits) where year is between 2000 and current year
+    2. Any 9 random digits (legacy or special format)
+    """
     if not matric:
         return False
-    # Format: 4 digit year + 5 digits (total 9 digits)
+    
+    # Must be exactly 9 digits
     pattern = r'^\d{9}$'
     if not re.match(pattern, matric):
         return False
-    # Extract year (first 4 digits)
-    year = int(matric[:4])
-    current_year = datetime.now().year
-    # Year should be between 2000 and current year
-    return 2000 <= year <= current_year
+    
+    # Check if it follows the year format (first 4 digits represent a valid year)
+    try:
+        year = int(matric[:4])
+        current_year = datetime.now().year
+        # If year is between 2000 and current year, it's valid
+        if 2000 <= year <= current_year:
+            return True
+    except (ValueError, IndexError):
+        pass
+    
+    # If not a valid year format, still accept any 9-digit number
+    # This handles legacy matric numbers or special formats
+    return True
 
 
 @auth_bp.route('/verify-matric', methods=['GET'])
@@ -53,7 +68,7 @@ def verify_matric():
         if not is_valid_matric_number(matric_number):
             return jsonify({
                 'success': False,
-                'message': 'Invalid matric number format. Should be 9 digits (YYYY + 5 digits)'
+                'message': 'Invalid matric number format. Must be 9 digits.'
             }), 400
         
         # Check in university database
@@ -81,7 +96,6 @@ def verify_matric():
             }), 400
         
         # Store matric number in session for registration
-        from flask import session
         session['verified_matric'] = matric_number
         session['student_data'] = {
             'full_name': student_record.full_name,
@@ -131,7 +145,7 @@ def login():
         if not is_valid_matric_number(matric_number):
             return jsonify({
                 'success': False,
-                'message': 'Invalid matric number format'
+                'message': 'Invalid matric number format. Must be 9 digits.'
             }), 400
         
         # Find user by matric number
@@ -169,7 +183,6 @@ def login():
         }), 500
 
 
-
 @auth_bp.route('/staff-login', methods=['GET'])
 def staff_login_page():
     """Render staff/admin login page"""
@@ -195,6 +208,12 @@ def staff_login():
             return jsonify({
                 'success': False,
                 'message': 'Please enter both matric number and password'
+            }), 400
+        
+        if not is_valid_matric_number(matric_number):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid matric number format. Must be 9 digits.'
             }), 400
         
         # Find user by matric number
@@ -242,8 +261,6 @@ def staff_login():
 @auth_bp.route('/register', methods=['GET'])
 def register_page():
     """Render registration page (after matric verification)"""
-    from flask import session
-    
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
     
@@ -258,8 +275,6 @@ def register_page():
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """Complete registration with password creation"""
-    from flask import session
-    
     try:
         # Check if matric was verified
         if 'verified_matric' not in session:
@@ -309,7 +324,7 @@ def register():
                 'message': 'Student record not found. Please verify again.'
             }), 404
         
-        # Create new user account - FIXED: Removed email field
+        # Create new user account
         new_user = User(
             full_name=student_record.full_name,
             user_type='student',
@@ -343,7 +358,7 @@ def register():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Registration error: {str(e)}")  # Add debug print
+        print(f"Registration error: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'An error occurred during registration. Please try again.'
@@ -378,7 +393,7 @@ def forgot_password():
         if not is_valid_matric_number(matric_number):
             return jsonify({
                 'success': False,
-                'message': 'Invalid matric number format'
+                'message': 'Invalid matric number format. Must be 9 digits.'
             }), 400
         
         # Verify against university database
@@ -409,8 +424,6 @@ def forgot_password():
         
         db.session.add(reset_request)
         db.session.commit()
-        
-        # Notify admin (in real implementation, send email or create notification)
         
         return jsonify({
             'success': True,
@@ -448,6 +461,15 @@ def check_matric():
                 'is_registered': False,
                 'is_graduated': False,
                 'message': ''
+            }), 200
+        
+        # First validate format
+        if not is_valid_matric_number(matric):
+            return jsonify({
+                'exists': False,
+                'is_registered': False,
+                'is_graduated': False,
+                'message': 'Invalid format. Must be 9 digits.'
             }), 200
         
         student = StudentUniversity.query.filter_by(matric_number=matric).first()
