@@ -1,64 +1,72 @@
 {
   "buildings": [
     {
+      "id": 1,
       "name": "Senate Building",
-      "building_type": "admin",
+      "image_filename": "senate-building.jpg",
+      "latitude": 6.4633,
+      "longitude": 3.1978,
       "description": "Main administrative building with helipad, elevators, and staircase. Houses Vice-Chancellor's office.",
-      "latitude": 6.4655,
-      "longitude": 3.2345,
-      "id": 1
+      "building_type": "admin"
     },
     {
       "id": 2,
       "name": "Faculty of Science",
-      "latitude": 6.466,
-      "longitude": 3.235,
+      "image_filename": "faculty-of-science.jpg",
+      "latitude": 6.4645,
+      "longitude": 3.1990,
       "description": "Faculty of Science - Computer Science, Mathematics, Physics, Chemistry, and Biological Sciences departments.",
       "building_type": "faculty"
     },
     {
       "id": 3,
       "name": "Faculty of Law",
-      "latitude": 6.4658,
-      "longitude": 3.2348,
+      "image_filename": "faculty-of-law.jpg",
+      "latitude": 6.4628,
+      "longitude": 3.1973,
       "description": "Lagos State University Faculty of Law building with moot court and law library.",
       "building_type": "faculty"
     },
     {
       "id": 4,
       "name": "Faculty of Social Sciences",
-      "latitude": 6.4645,
-      "longitude": 3.234,
+      "image_filename": "faculty-of-social-sciences.jpg",
+      "latitude": 6.4611,
+      "longitude": 3.1948,
       "description": "Economics, Political Science, Sociology, and Psychology departments.",
       "building_type": "faculty"
     },
     {
       "id": 5,
       "name": "Faculty of Arts",
-      "latitude": 6.464,
-      "longitude": 3.2335,
+      "image_filename": "faculty-of-arts.jpg",
+      "latitude": 6.4619,
+      "longitude": 3.1955,
       "description": "Languages, History, Philosophy, and Creative Arts departments.",
       "building_type": "faculty"
     },
     {
       "id": 6,
       "name": "Faculty of Management Sciences",
-      "latitude": 6.4652,
-      "longitude": 3.2343,
+      "image_filename": "faculty-of-management-sciences.jpg",
+      "latitude": 6.4631,
+      "longitude": 3.1992,
       "description": "Business Administration, Accounting, and Marketing departments.",
       "building_type": "faculty"
     },
     {
       "id": 7,
       "name": "Faculty of Education",
-      "latitude": 6.4638,
-      "longitude": 3.2332,
+      "image_filename": "faculty-of-education.jpg",
+      "latitude": 6.4659,
+      "longitude": 3.2011,
       "description": "Educational Foundation, Curriculum Studies, and Library Science.",
       "building_type": "faculty"
     },
     {
       "id": 8,
       "name": "School of Transport and Logistics",
+      "image_filename": "school-of-transport-and-logistics.jpg",
       "latitude": 6.4648,
       "longitude": 3.2342,
       "description": "Faculty of Transport - Transportation and Logistics studies.",
@@ -67,6 +75,7 @@
     {
       "id": 9,
       "name": "Lagos State University School of Communication",
+      "image_filename": "lagos-state-university-school-of-communication.jpg",
       "latitude": 6.4665,
       "longitude": 3.2358,
       "description": "Mass Communication and Journalism department.",
@@ -75,6 +84,7 @@
     {
       "id": 10,
       "name": "Department of History and International Studies",
+      "image_filename": "department-of-history-and-international-studies.jpg",
       "latitude": 6.4642,
       "longitude": 3.2338,
       "description": "History and International Studies department.",
@@ -83,6 +93,7 @@
     {
       "id": 11,
       "name": "Department of Philosophy",
+      "image_filename": "department-of-philosophy.jpg",
       "latitude": 6.4641,
       "longitude": 3.2337,
       "description": "Philosophy department.",
@@ -91,6 +102,7 @@
     {
       "id": 12,
       "name": "Department of Theatre Arts & Music",
+      "image_filename": "department-of-theatre-arts-and-music.jpg",
       "latitude": 6.4643,
       "longitude": 3.2336,
       "description": "Performing arts theater and music department.",
@@ -99,6 +111,7 @@
     {
       "id": 13,
       "name": "MBA Department",
+      "image_filename": "mba-department.jpg",
       "latitude": 6.4662,
       "longitude": 3.2355,
       "description": "Master of Business Administration department.",
@@ -107,22 +120,25 @@
     {
       "id": 14,
       "name": "Post Graduate School",
+      "image_filename": "post-graduate-school.jpg",
       "latitude": 6.4668,
-      "longitude": 3.236,
+      "longitude": 3.2360,
       "description": "Post Graduate School - Exams and Records office.",
       "building_type": "faculty"
     },
     {
       "id": 15,
       "name": "Main Auditorium",
-      "latitude": 6.4653,
-      "longitude": 3.2347,
+      "image_filename": "main-auditorium.jpg",
+      "latitude": 6.4641,
+      "longitude": 3.1966,
       "description": "LASU Main Auditorium for university events and gatherings.",
       "building_type": "lecture_hall"
     },
     {
       "id": 16,
       "name": "Buba Marwa Auditorium",
+      "image_filename": "buba-marwa-auditorium.jpg",
       "latitude": 6.4657,
       "longitude": 3.2351,
       "description": "Modern auditorium for lectures and events.",
@@ -131,6 +147,7 @@
     {
       "id": 17,
       "name": "3-in-1 Mega Lecture Hall",
+      "image_filename": "3-in-1-mega-lecture-hall.jpg",
       "latitude": 6.4647,
       "longitude": 3.2341,
       "description": "Faculty of Education 3-in-1 Lecture Theatre - Large capacity lecture hall.",
@@ -138,7 +155,8 @@
     },
     {
       "id": 18,
-      "name": "Cheif S.L. Edu Lecture Hall",
+      "name": "Chief S.L. Edu Lecture Hall",
+      "image_filename": "chief-sl-edu-lecture-hall.jpg",
       "latitude": 6.4663,
       "longitude": 3.2356,
       "description": "Lecture hall for various departments.",
@@ -147,6 +165,7 @@
     {
       "id": 19,
       "name": "Mass Communication Lecture Hall",
+      "image_filename": "mass-communication-lecture-hall.jpg",
       "latitude": 6.4666,
       "longitude": 3.2359,
       "description": "Mass Communication department lecture hall.",
@@ -155,6 +174,7 @@
     {
       "id": 20,
       "name": "Central Language Lab",
+      "image_filename": "central-language-lab.jpg",
       "latitude": 6.4644,
       "longitude": 3.2339,
       "description": "Language learning laboratory.",
@@ -163,14 +183,16 @@
     {
       "id": 21,
       "name": "Eco-Library",
-      "latitude": 6.4646,
-      "longitude": 3.2344,
+      "image_filename": "eco-library.jpg",
+      "latitude": 6.4654,
+      "longitude": 3.2001,
       "description": "Main university library with study areas and e-resources.",
       "building_type": "library"
     },
     {
       "id": 22,
       "name": "Law Library (Taslim Olawale Elias Law Library)",
+      "image_filename": "law-library-taslim-olawale-elias-law-library.jpg",
       "latitude": 6.4659,
       "longitude": 3.2352,
       "description": "Specialized law library for Faculty of Law students.",
@@ -179,6 +201,7 @@
     {
       "id": 23,
       "name": "Science Library",
+      "image_filename": "science-library.jpg",
       "latitude": 6.4661,
       "longitude": 3.2354,
       "description": "Science faculty library.",
@@ -187,6 +210,7 @@
     {
       "id": 24,
       "name": "LASU Mosque (Central Mosque)",
+      "image_filename": "lasu-mosque-central-mosque.jpg",
       "latitude": 6.4651,
       "longitude": 3.2346,
       "description": "Central Mosque for Muslim prayers, open 24 hours.",
@@ -195,6 +219,7 @@
     {
       "id": 25,
       "name": "Chapel of Light",
+      "image_filename": "chapel-of-light.jpg",
       "latitude": 6.4649,
       "longitude": 3.2345,
       "description": "Christian worship center on campus.",
@@ -203,14 +228,16 @@
     {
       "id": 26,
       "name": "Sports Complex",
-      "latitude": 6.467,
-      "longitude": 3.2365,
+      "image_filename": "sports-complex.jpg",
+      "latitude": 6.4598,
+      "longitude": 3.1927,
       "description": "Hussam Okoya Sports Complex - Football field, basketball court, and indoor sports facilities.",
       "building_type": "sports"
     },
     {
       "id": 27,
       "name": "Lawn Tennis Court",
+      "image_filename": "lawn-tennis-court.jpg",
       "latitude": 6.4669,
       "longitude": 3.2363,
       "description": "Tennis courts for recreational and competitive play.",
@@ -219,6 +246,7 @@
     {
       "id": 28,
       "name": "Volleyball Court",
+      "image_filename": "volleyball-court.jpg",
       "latitude": 6.4671,
       "longitude": 3.2366,
       "description": "Volleyball court for student recreation.",
@@ -227,6 +255,7 @@
     {
       "id": 29,
       "name": "Football Pitch",
+      "image_filename": "football-pitch.jpg",
       "latitude": 6.4672,
       "longitude": 3.2367,
       "description": "Main football field for matches and practice.",
@@ -235,6 +264,7 @@
     {
       "id": 30,
       "name": "ICT Centre",
+      "image_filename": "ict-centre.jpg",
       "latitude": 6.4664,
       "longitude": 3.2357,
       "description": "Computer labs, internet services, and IT support.",
@@ -243,6 +273,7 @@
     {
       "id": 31,
       "name": "CBT Centre",
+      "image_filename": "cbt-centre.jpg",
       "latitude": 6.4667,
       "longitude": 3.2361,
       "description": "Computer-Based Test centre for examinations.",
@@ -251,6 +282,7 @@
     {
       "id": 32,
       "name": "Student Arcade",
+      "image_filename": "student-arcade.jpg",
       "latitude": 6.4654,
       "longitude": 3.2349,
       "description": "Student dormitory and hangout area.",
@@ -259,15 +291,17 @@
     {
       "id": 33,
       "name": "Student Affairs Complex",
+      "image_filename": "student-affairs-complex.jpg",
       "latitude": 6.4656,
-      "longitude": 3.234,
+      "longitude": 3.2340,
       "description": "Student affairs administrative offices.",
       "building_type": "admin"
     },
     {
       "id": 34,
       "name": "Law Clinic",
-      "latitude": 6.465,
+      "image_filename": "law-clinic.jpg",
+      "latitude": 6.4650,
       "longitude": 3.2339,
       "description": "Legal clinic beside Vice Chancellor's Office.",
       "building_type": "facility"
@@ -275,6 +309,7 @@
     {
       "id": 35,
       "name": "Career Development Center",
+      "image_filename": "career-development-center.jpg",
       "latitude": 6.4644,
       "longitude": 3.2333,
       "description": "Career guidance and development services.",
@@ -283,14 +318,16 @@
     {
       "id": 36,
       "name": "Primary Health Care Centre",
-      "latitude": 6.4642,
-      "longitude": 3.2331,
+      "image_filename": "primary-health-care-centre.jpg",
+      "latitude": 6.4665,
+      "longitude": 3.1995,
       "description": "Medical clinic for students and staff.",
       "building_type": "health"
     },
     {
       "id": 37,
       "name": "Medical Center",
+      "image_filename": "medical-center.jpg",
       "latitude": 6.4643,
       "longitude": 3.2332,
       "description": "Pharmacy and medical laboratory unit.",
@@ -299,7 +336,8 @@
     {
       "id": 38,
       "name": "Zenith Bank",
-      "latitude": 6.466,
+      "image_filename": "zenith-bank.jpg",
+      "latitude": 6.4660,
       "longitude": 3.2342,
       "description": "Banking services on campus.",
       "building_type": "service"
@@ -307,6 +345,7 @@
     {
       "id": 39,
       "name": "Access Bank",
+      "image_filename": "access-bank.jpg",
       "latitude": 6.4658,
       "longitude": 3.2341,
       "description": "Access Bank campus branch.",
@@ -315,14 +354,16 @@
     {
       "id": 40,
       "name": "Wema Bank",
+      "image_filename": "wema-bank.jpg",
       "latitude": 6.4657,
-      "longitude": 3.234,
+      "longitude": 3.2340,
       "description": "Wema Bank branch and ATM on campus.",
       "building_type": "service"
     },
     {
       "id": 41,
       "name": "Sterling Bank",
+      "image_filename": "sterling-bank.jpg",
       "latitude": 6.4656,
       "longitude": 3.2339,
       "description": "Sterling Bank campus branch.",
@@ -331,6 +372,7 @@
     {
       "id": 42,
       "name": "United Bank for Africa (UBA)",
+      "image_filename": "united-bank-for-africa-uba.jpg",
       "latitude": 6.4655,
       "longitude": 3.2338,
       "description": "UBA branch inside LASU campus.",
@@ -339,6 +381,7 @@
     {
       "id": 43,
       "name": "Lasu Bookshop",
+      "image_filename": "lasu-bookshop.jpg",
       "latitude": 6.4652,
       "longitude": 3.2344,
       "description": "University bookshop near the library.",
@@ -347,6 +390,7 @@
     {
       "id": 44,
       "name": "Science Market",
+      "image_filename": "science-market.jpg",
       "latitude": 6.4662,
       "longitude": 3.2348,
       "description": "Market area with shops and services for students.",
@@ -355,6 +399,7 @@
     {
       "id": 45,
       "name": "Eco Market",
+      "image_filename": "eco-market.jpg",
       "latitude": 6.4659,
       "longitude": 3.2346,
       "description": "Ecological market with various shops.",
@@ -363,6 +408,7 @@
     {
       "id": 46,
       "name": "LASU Radio (Lagos State University Radio)",
+      "image_filename": "lasu-radio-lagos-state-university-radio.jpg",
       "latitude": 6.4663,
       "longitude": 3.2353,
       "description": "Campus radio station broadcasting station.",
@@ -371,6 +417,7 @@
     {
       "id": 47,
       "name": "Faculty of Art Munch It",
+      "image_filename": "faculty-of-art-munch-it.jpg",
       "latitude": 6.4646,
       "longitude": 3.2334,
       "description": "Cafeteria in Faculty of Arts building.",
@@ -379,6 +426,7 @@
     {
       "id": 48,
       "name": "Amala Extra",
+      "image_filename": "amala-extra.jpg",
       "latitude": 6.4651,
       "longitude": 3.2336,
       "description": "Restaurant serving local cuisine.",
@@ -387,6 +435,7 @@
     {
       "id": 49,
       "name": "Flavours Restaurant",
+      "image_filename": "flavours-restaurant.jpg",
       "latitude": 6.4665,
       "longitude": 3.2349,
       "description": "Restaurant with diverse menu options.",
@@ -395,6 +444,7 @@
     {
       "id": 50,
       "name": "DIMEYS FOODS",
+      "image_filename": "dimeys-foods.jpg",
       "latitude": 6.4654,
       "longitude": 3.2343,
       "description": "Food manufacturer and vendor.",
@@ -403,6 +453,7 @@
     {
       "id": 51,
       "name": "Deluxe Kitchen (Mummy Ayo)",
+      "image_filename": "deluxe-kitchen-mummy-ayo.jpg",
       "latitude": 6.4653,
       "longitude": 3.2337,
       "description": "Popular student cafeteria.",
@@ -411,6 +462,7 @@
     {
       "id": 52,
       "name": "FORLANS TREATS AND EVENTS",
+      "image_filename": "forlans-treats-and-events.jpg",
       "latitude": 6.4661,
       "longitude": 3.2347,
       "description": "Cake shop and event treats.",
@@ -419,7 +471,8 @@
     {
       "id": 53,
       "name": "Eisa's Treats",
-      "latitude": 6.465,
+      "image_filename": "eisass-treats.jpg",
+      "latitude": 6.4650,
       "longitude": 3.2341,
       "description": "Banana bread, cakes and desserts.",
       "building_type": "eatery"
@@ -427,6 +480,7 @@
     {
       "id": 54,
       "name": "Olaiya Staff Food Canteen",
+      "image_filename": "olaiya-staff-food-canteen.jpg",
       "latitude": 6.4668,
       "longitude": 3.2362,
       "description": "Senior staff club canteen.",
@@ -435,6 +489,7 @@
     {
       "id": 55,
       "name": "Dolly Blossom Foods",
+      "image_filename": "dolly-blossom-foods.jpg",
       "latitude": 6.4662,
       "longitude": 3.2346,
       "description": "Restaurant in Science Market.",
@@ -443,6 +498,7 @@
     {
       "id": 56,
       "name": "Post Office",
+      "image_filename": "post-office.jpg",
       "latitude": 6.4652,
       "longitude": 3.2335,
       "description": "LASU Post Office for mailing services.",
@@ -451,6 +507,7 @@
     {
       "id": 57,
       "name": "AWA BIKE",
+      "image_filename": "awa-bike.jpg",
       "latitude": 6.4664,
       "longitude": 3.2351,
       "description": "Bicycle rental service on campus.",
@@ -459,14 +516,16 @@
     {
       "id": 58,
       "name": "Trekk Scooters",
+      "image_filename": "trekk-scooters.jpg",
       "latitude": 6.4651,
-      "longitude": 3.234,
+      "longitude": 3.2340,
       "description": "Scooter rental service for campus mobility.",
       "building_type": "service"
     },
     {
       "id": 59,
       "name": "Lasu Car Wash",
+      "image_filename": "lasu-car-wash.jpg",
       "latitude": 6.4669,
       "longitude": 3.2364,
       "description": "Car wash service on campus.",
@@ -475,7 +534,8 @@
     {
       "id": 60,
       "name": "AutoMedics Limited",
-      "latitude": 6.467,
+      "image_filename": "automedics-limited.jpg",
+      "latitude": 6.4670,
       "longitude": 3.2366,
       "description": "Car repair and maintenance service.",
       "building_type": "service"
@@ -483,14 +543,16 @@
     {
       "id": 61,
       "name": "Pavilion",
+      "image_filename": "pavilion.jpg",
       "latitude": 6.4666,
-      "longitude": 3.236,
+      "longitude": 3.2360,
       "description": "Open event space on campus.",
       "building_type": "facility"
     },
     {
       "id": 62,
       "name": "Senior Staff Club",
+      "image_filename": "senior-staff-club.jpg",
       "latitude": 6.4667,
       "longitude": 3.2361,
       "description": "Recreational club for senior staff.",
@@ -499,14 +561,16 @@
     {
       "id": 63,
       "name": "Fish Farm",
+      "image_filename": "fish-farm.jpg",
       "latitude": 6.4675,
-      "longitude": 3.237,
+      "longitude": 3.2370,
       "description": "University fish farming project.",
       "building_type": "facility"
     },
     {
       "id": 64,
       "name": "Center for Entrepreneurship Studies",
+      "image_filename": "center-for-entrepreneurship-studies.jpg",
       "latitude": 6.4649,
       "longitude": 3.2343,
       "description": "Entrepreneurship training and coaching center.",
@@ -515,10 +579,173 @@
     {
       "id": 65,
       "name": "Open Distance Learning and Research Institute (ODLRI)",
+      "image_filename": "open-distance-learning-and-research-institute-odlri.jpg",
       "latitude": 6.4673,
       "longitude": 3.2368,
       "description": "Distance learning and research institute.",
       "building_type": "facility"
-    }
+    },
+    {
+      "id": 66,
+      "name": "Main Entrance Gate",
+      "image_filename": "main-entrance-gate.jpg",
+      "latitude": 6.4652,
+      "longitude": 3.2009,
+      "description": "Main entrance gate to Lagos State University Ojo Campus.",
+      "building_type": "gate"
+    },
+    {
+      "id": 67,
+      "name": "Health Center",
+      "image_filename": "health-center.jpg",
+      "latitude": 6.4665,
+      "longitude": 3.1995,
+      "description": "University health center providing medical services to students and staff.",
+      "building_type": "health"
+    },
+    {
+      "id": 68,
+      "name": "LASU Eyo Roundabout",
+      "image_filename": "lasu-eyo-roundabout.jpg",
+      "latitude": 6.47404,
+      "longitude": 3.20254,
+      "description": "Prominent landmark centered by a signature white Eyo masquerade statue, controlling the split into the main university campus and the Ojo/Iba axis.",
+      "building_type": "landmark"
+    },
+    {
+      "id": 69,
+      "name": "Academic Planning and Resource Centre (TETFund Multipurpose Facility)",
+      "image_filename": "academic-planning-and-resource-centre-tetfund-multipurpose-facility.jpg",
+      "latitude": 6.4674,
+      "longitude": 3.1906,
+      "description": "TETFund multipurpose facility officially known as the Academic Planning and Resource Centre.",
+      "building_type": "facility"
+    },
+    {
+      "id": 70,
+      "name": "Enitan Bababunmi Science Laboratory",
+      "image_filename": "enitan-bababunmi-science-laboratory.jpg",
+      "latitude": 6.4608,
+      "longitude": 3.1952,
+      "description": "Academic and research facility named after Prof. Enitan Abisogun Bababunmi, serving students and researchers within the Faculty of Science.",
+      "building_type": "facility"
+    },
+    {
+      "id": 71,
+      "name": "Babajide Olusola Sanwo-Olu Library Complex",
+      "image_filename": "babajide-olusola-sanwo-olu-library-complex.jpg",
+      "latitude": 6.4632,
+      "longitude": 3.2081,
+      "description": "State-of-the-art, 4-storey library complex, largest university library in West Africa (commissioned October 2025), featuring 24-hour reading rooms, digital research facilities, innovation labs, seminar halls, conference halls, archives, and reading lounges.",
+      "building_type": "library"
+    },
+    {
+      "id": 72,
+      "name": "Femi Gbajabiamila Conference Centre",
+      "image_filename": "femi-gbajabiamila-conference-centre.jpg",
+      "latitude": 6.4633,
+      "longitude": 3.2089,
+      "description": "Massive 2,106 sqm conference centre commissioned in January 2024, accommodating up to 1,000 individuals.",
+      "building_type": "facility"
+    },
+    {
+      "id": 73,
+      "name": "LASU University Printing Press Building",
+      "image_filename": "lasu-university-printing-press-building.jpg",
+      "latitude": 6.4674,
+      "longitude": 3.1956,
+      "description": "Purpose-built printing facility near Okoya-Thomas Sports Hall and the Senate Building.",
+      "building_type": "service"
+    },
+    {
+      "id": 74,
+      "name": "New TETFund Multi-Purpose Building",
+      "image_filename": "new-tetfund-multi-purpose-building.jpg",
+      "latitude": 11.9833,
+      "longitude": 8.4167,
+      "description": "Modern facility commissioned by the Federal Government for international conferences, lectures, examinations, and social gatherings.",
+      "building_type": "facility"
+    },
+    {
+      "id": 75,
+      "name": "Centre for Urban and Regional Planning (LASU)",
+      "image_filename": "centre-for-urban-and-regional-planning-lasu.jpg",
+      "latitude": 6.4617,
+      "longitude": 3.1792,
+      "description": "Dedicated to multidisciplinary research and training in Urban and Regional Planning, Tourism, Resource Management, and Population and Development Studies.",
+      "building_type": "facility"
+    },
+    {
+      "id": 76,
+      "name": "Sir David Sunmoni Hall and Prof. Gbolahan Elias Hall",
+      "image_filename": "sir-david-sunmoni-hall-and-prof-gbolahan-elias-hall.jpg",
+      "latitude": 6.4633,
+      "longitude": 3.2081,
+      "description": "Modern on-campus residential halls (male student hostels).",
+      "building_type": "student_union"
+    },
+    {
+      "id": 77,
+      "name": "Iya Ashabi (Faculty of Education)",
+      "image_filename": "iya-ashabi-faculty-of-education.jpg",
+      "latitude": 6.4674,
+      "longitude": 3.2081,
+      "description": "Budget-friendly 'buka'-style local eatery popular among students and staff, located within the Faculty of Education.",
+      "building_type": "eatery"
+    },
+    {
+      "id": 78,
+      "name": "Kena's Kitchen",
+      "image_filename": "kenas-kitchen.jpg",
+      "latitude": 6.4656,
+      "longitude": 3.2014,
+      "description": "Popular fast-food spot at Shop A3, AJ Complex near Sports Center road before Faculty of Sciences, known for juicy beef burgers, pasta, and fries.",
+      "building_type": "eatery"
+    },
+    {
+      "id": 79,
+      "name": "LASU Innovation Hub (Centre for Research, Innovation and Entrepreneurship)",
+      "image_filename": "lasu-innovation-hub-centre-for-research-innovation-and-entrepreneurship.jpg",
+      "latitude": 6.4618,
+      "longitude": 3.1916,
+      "description": "Incubation and technology hub launched in partnership with the United Nations Development Programme (UNDP).",
+      "building_type": "facility"
+    },
+    {
+    "id": 80,
+    "name": "Igando Gate",
+    "image_filename": "igando-gate.jpg",
+    "latitude": 6.4678,
+    "longitude": 3.2385,
+    "description": "Secondary entrance gate to LASU Ojo Campus, leading to the Igando road axis. Popular meeting point for students.",
+    "building_type": "gate"
+  },
+  {
+    "id": 81,
+    "name": "Badagry Gate",
+    "image_filename": "badagry-gate.jpg",
+    "latitude": 6.4602,
+    "longitude": 3.2298,
+    "description": "Main gate on the Badagry Expressway side of LASU Ojo Campus. Major entry point for commuters from Badagry and surrounding areas.",
+    "building_type": "gate"
+  },
+  {
+  "id": 82,
+  "name": "Ibiyemi Olatunji-Bello Building",
+  "image_filename": "ibiyemi-olatunji-bello-building.jpg",
+  "latitude": 6.4645,
+  "longitude": 3.1965,
+  "description": "Administrative building named after Professor Ibiyemi Olatunji-Bello, the 9th Substantive Vice-Chancellor of Lagos State University. Houses key administrative offices.",
+  "building_type": "admin"
+},
+{
+  "id": 83,
+  "name": "Centre for Planning Studies",
+  "image_filename": "centre-for-planning-studies.jpg",
+  "latitude": 6.4619,
+  "longitude": 3.1795,
+  "description": "Dedicated centre for urban and regional planning studies, research, and training at LASU.",
+  "building_type": "facility"
+}
   ]
 }

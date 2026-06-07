@@ -143,12 +143,15 @@
                 {% endif %}
                 <li class="mobile-drawer-divider"></li>
                 <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            {% else %}
-                <!-- Guest menu -->
-                <li><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                <li><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
-            {% endif %}
+                {% else %}
+                    <!-- Guest menu -->
+                    <li><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="{{ url_for('map.public_map') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
+                    <li><a href="{{ url_for('main.public_locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
+                    <li class="mobile-drawer-divider"></li>
+                    <li><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                    <li><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+                {% endif %}
         </ul>
         <div class="mobile-drawer-footer">
             <div class="mobile-drawer-version">
@@ -206,12 +209,22 @@
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>
                     </a>
+               
                 {% else %}
                     <!-- Guest desktop menu -->
                     <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
                         <i class="fas fa-home"></i>
                         <span>Home</span>
                     </a>
+                    <a href="{{ url_for('map.public_map') }}" class="nav-link {% if request.endpoint == 'map.public_map' %}active{% endif %}">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Map</span>
+                    </a>
+                    <a href="{{ url_for('main.public_locations') }}" class="nav-link {% if request.endpoint == 'main.public_locations' %}active{% endif %}">
+                        <i class="fas fa-building"></i>
+                        <span>Locations</span>
+                    </a>
+                    <div class="nav-divider"></div>
                     <a href="{{ url_for('auth.login_page') }}" class="nav-link {% if request.endpoint == 'auth.login_page' %}active{% endif %}">
                         <i class="fas fa-sign-in-alt"></i>
                         <span>Login</span>

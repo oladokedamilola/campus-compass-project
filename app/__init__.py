@@ -56,6 +56,16 @@ def create_app():
         """Required by Flask-Login to reload user from session"""
         return User.query.get(int(user_id))
     
+    # ============================================
+    # SERVE CAMPUS IMAGES FROM CUSTOM FOLDER
+    # ============================================
+    @app.route('/static/campus-images/<path:filename>')
+    def serve_campus_images(filename):
+        """Serve images from the campus-images folder"""
+        # Get the absolute path to the campus-images folder
+        campus_images_path = os.path.join(app.root_path, 'static', 'campus-images')
+        return send_from_directory(campus_images_path, filename)
+    
     # Register blueprints (routes)
     from app.routes.auth import auth_bp
     from app.routes.main import main_bp

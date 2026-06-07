@@ -1,0 +1,198 @@
+<!-- Image Modal Component -->
+<div id="imageModal" class="image-modal" style="display: none;">
+    <div class="image-modal-content">
+        <div class="image-modal-header">
+            <h3 id="modalBuildingName">Building Image</h3>
+            <button id="closeImageModal" class="image-modal-close">&times;</button>
+        </div>
+        <div class="image-modal-body">
+            <img id="modalBuildingImage" class="image-modal-img" alt="Building image">
+            <div id="imageFallback" class="image-fallback" style="display: none;">
+                <i class="fas fa-building"></i>
+                <p>No image available for this building</p>
+                <small>Image coming soon!</small>
+            </div>
+        </div>
+        <div class="image-modal-footer">
+            <div id="autoCloseTimer" class="auto-close-timer"></div>
+            <button id="manualCloseBtn" class="btn-campus-accent">Close & Continue</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.3s ease;
+}
+
+.image-modal-content {
+    background: var(--campus-gray-800);
+    border-radius: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    border: 1px solid var(--campus-accent);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideUp 0.3s ease;
+}
+
+.image-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--campus-gray-700);
+    background: var(--campus-gray-900);
+}
+
+.image-modal-header h3 {
+    margin: 0;
+    color: var(--campus-accent);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.image-modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: var(--campus-gray-400);
+    transition: all 0.2s;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.image-modal-close:hover {
+    color: #FF1744;
+    background: rgba(255, 23, 68, 0.1);
+    transform: scale(1.1);
+}
+
+.image-modal-body {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    background: var(--campus-gray-800);
+}
+
+.image-modal-img {
+    max-width: 100%;
+    max-height: 50vh;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.image-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    color: var(--campus-gray-500);
+}
+
+.image-fallback i {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: var(--campus-gray-600);
+}
+
+.image-fallback p {
+    margin: 8px 0;
+    font-size: 16px;
+    color: var(--campus-gray-400);
+}
+
+.image-fallback small {
+    font-size: 12px;
+    color: var(--campus-gray-600);
+}
+
+.image-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--campus-gray-700);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--campus-gray-900);
+}
+
+.auto-close-timer {
+    color: var(--campus-gray-500);
+    font-size: 14px;
+}
+
+.auto-close-timer i {
+    margin-right: 8px;
+    color: var(--campus-accent);
+}
+
+#manualCloseBtn {
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .image-modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .image-modal-body {
+        min-height: 200px;
+        padding: 16px;
+    }
+    
+    .image-modal-img {
+        max-height: 40vh;
+    }
+    
+    .image-modal-header {
+        padding: 16px 20px;
+    }
+    
+    .image-modal-footer {
+        padding: 12px 20px;
+    }
+}
+</style>

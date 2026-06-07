@@ -1,6 +1,6 @@
-{% extends 'base_user.html' %}
+{% extends 'base_guest.html' %}
 
-{% block title %}Map Navigation{% endblock %}
+{% block title %}Campus Map - Guest Mode{% endblock %}
 {% block topbar_title %}Campus Map{% endblock %}
 
 {% block extra_css %}
@@ -10,20 +10,111 @@
 
 <style>
 /* ============================================
-   MAP STYLES - Google Maps Style (Dark Theme)
+   MAP GUEST STYLES - Google Maps Style
    ============================================ */
 
-/* Override user-content padding for full-width map */
-.user-content {
-    padding: 0 !important;
-    max-width: none !important;
+/* DO NOT hide the base sidebar - let it work normally */
+/* When base sidebar is open, blur the map content */
+body.sidebar-open .map-app-container {
+    filter: blur(4px);
+    transition: filter 0.3s ease;
+}
+
+/* When base sidebar is open, hide the floating search bar */
+body.sidebar-open .floating-search-bar {
+    display: none !important;
+}
+
+/* Ensure proper z-index layering */
+.user-sidebar {
+    z-index: 1003 !important;
+}
+
+.map-panel-overlay {
+    z-index: 1001;
+}
+
+.map-search-panel {
+    z-index: 1002;
+}
+
+/* Guest Notice Banner - Auto-dismiss with close button */
+.guest-notice-banner {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    width: 90%;
+    max-width: 400px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e8e8e8;
+    transition: all 0.3s ease;
+}
+
+.guest-notice-banner.hide {
+    display: none;
+}
+
+.guest-notice-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+}
+
+.guest-notice-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.guest-notice-text i {
+    color: #4285f4;
+    font-size: 18px;
+}
+
+.guest-notice-text span {
+    font-size: 13px;
+    color: #1a1a1a;
+}
+
+.guest-notice-text a {
+    color: #4285f4;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.guest-notice-text a:hover {
+    text-decoration: underline;
+}
+
+.guest-notice-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa0a6;
+    transition: all 0.2s;
+}
+
+.guest-notice-close:hover {
+    background: #f5f5f5;
+    color: #ea4335;
 }
 
 /* App Container - takes full width */
 .map-app-container {
     display: flex;
     width: 100%;
-    height: calc(100vh - 73px - 73px); /* Subtract topbar height */
+    height: calc(100vh - 73px); /* Subtract guest navbar height */
     overflow: hidden;
 }
 
@@ -31,40 +122,127 @@
 .map-search-panel {
     width: 320px;
     height: 100%;
-    background: var(--campus-gray-800);
-    border-right: 1px solid var(--campus-gray-700);
+    background: #ffffff;
+    border-right: 1px solid #e8e8e8;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
-    z-index: 10;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+/* On mobile, the map's search panel becomes a drawer that overlays */
+@media (max-width: 768px) {
+    .map-search-panel {
+        position: fixed;
+        top: 73px;
+        left: 0;
+        transform: translateX(-100%);
+        height: calc(100vh - 73px);
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .map-search-panel.open {
+        transform: translateX(0);
+    }
+    
+    /* Overlay when search panel is open */
+    .map-panel-overlay {
+        position: fixed;
+        top: 73px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: none;
+    }
+    
+    .map-panel-overlay.active {
+        display: block;
+    }
+}
+
+/* Mobile panel toggle button (opens the search panel) */
+.mobile-panel-toggle {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5f6368;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-panel-toggle:hover {
+    background: #f5f5f5;
+    transform: scale(1.02);
+}
+
+/* Close button inside panel header (mobile only) */
+.panel-close-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    font-size: 18px;
+    color: #5f6368;
+    margin-left: auto;
+}
+
+.panel-close-btn:hover {
+    background: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+    .mobile-panel-toggle {
+        display: flex !important;
+    }
+    
+    .panel-close-btn {
+        display: flex !important;
+    }
 }
 
 .panel-header {
     padding: 20px;
-    border-bottom: 1px solid var(--campus-gray-700);
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .logo {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 16px;
 }
 
 .logo i {
     font-size: 24px;
-    color: var(--campus-accent);
+    color: #4285f4;
 }
 
 .logo span {
     font-size: 18px;
     font-weight: 600;
-    color: white;
+    color: #1a1a1a;
 }
 
 .logo .badge {
-    background: var(--campus-accent-soft);
-    color: var(--campus-accent);
+    background: #e8f0fe;
+    color: #4285f4;
     font-size: 10px;
     padding: 2px 8px;
     border-radius: 12px;
@@ -76,21 +254,23 @@
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: var(--campus-gray-400);
-    background: var(--campus-gray-700);
+    color: #5f6368;
+    background: #f5f5f5;
     padding: 8px 12px;
     border-radius: 20px;
+    margin-top: 12px;
+    width: 100%;
 }
 
 .location-info i {
-    color: var(--campus-accent);
+    color: #4285f4;
     font-size: 12px;
 }
 
 /* Search Box */
 .map-search-box {
     padding: 16px 20px;
-    border-bottom: 1px solid var(--campus-gray-700);
+    border-bottom: 1px solid #e8e8e8;
 }
 
 .search-input-wrapper {
@@ -102,30 +282,29 @@
 .search-input-wrapper i {
     position: absolute;
     left: 14px;
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     font-size: 16px;
 }
 
 .search-input-wrapper input {
     width: 100%;
     padding: 12px 16px 12px 42px;
-    border: 1px solid var(--campus-gray-600);
+    border: 1px solid #dadce0;
     border-radius: 28px;
     font-size: 14px;
     font-family: inherit;
     transition: all 0.2s ease;
-    background: var(--campus-gray-800);
-    color: white;
+    background: #ffffff;
 }
 
 .search-input-wrapper input:focus {
     outline: none;
-    border-color: var(--campus-accent);
-    box-shadow: 0 0 0 2px var(--campus-accent-soft);
+    border-color: #4285f4;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .search-input-wrapper input::placeholder {
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
 }
 
 /* Search Results */
@@ -148,22 +327,22 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid var(--campus-gray-700);
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .map-result-item:hover {
-    background: var(--campus-gray-700);
+    background: #f5f5f5;
 }
 
 .map-result-icon {
     width: 36px;
     height: 36px;
-    background: var(--campus-accent-soft);
+    background: #f0f7ff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--campus-accent);
+    color: #4285f4;
 }
 
 .map-result-info {
@@ -173,20 +352,20 @@
 .map-result-name {
     font-weight: 500;
     font-size: 14px;
-    color: white;
+    color: #1a1a1a;
     margin-bottom: 2px;
 }
 
 .map-result-type {
     font-size: 11px;
-    color: var(--campus-gray-400);
+    color: #5f6368;
     text-transform: capitalize;
 }
 
 /* Random Locations Section */
 .random-locations-section {
     padding: 16px 20px;
-    border-top: 1px solid var(--campus-gray-700);
+    border-top: 1px solid #e8e8e8;
     margin-top: auto;
 }
 
@@ -200,12 +379,12 @@
 .random-locations-header h4 {
     font-size: 13px;
     font-weight: 600;
-    color: var(--campus-gray-300);
+    color: #1a1a1a;
     margin: 0;
 }
 
 .random-locations-header h4 i {
-    color: var(--campus-accent);
+    color: #4285f4;
     margin-right: 6px;
     font-size: 12px;
 }
@@ -213,7 +392,7 @@
 .refresh-btn {
     background: none;
     border: none;
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     cursor: pointer;
     padding: 6px;
     border-radius: 50%;
@@ -222,8 +401,8 @@
 }
 
 .refresh-btn:hover {
-    background: var(--campus-gray-700);
-    color: var(--campus-accent);
+    background: #f5f5f5;
+    color: #4285f4;
 }
 
 .random-locations-list {
@@ -239,26 +418,26 @@
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    background: var(--campus-gray-700);
+    background: #f8f9fa;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .random-location-item:hover {
-    background: var(--campus-accent-soft);
+    background: #e8f0fe;
     transform: translateX(4px);
 }
 
 .random-location-icon {
     width: 36px;
     height: 36px;
-    background: var(--campus-gray-800);
+    background: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--campus-accent);
+    color: #4285f4;
 }
 
 .random-location-info {
@@ -268,17 +447,17 @@
 .random-location-name {
     font-weight: 500;
     font-size: 13px;
-    color: white;
+    color: #1a1a1a;
     margin-bottom: 2px;
 }
 
 .random-location-type {
     font-size: 11px;
-    color: var(--campus-gray-400);
+    color: #5f6368;
 }
 
 .random-location-arrow {
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     font-size: 12px;
 }
 
@@ -288,7 +467,7 @@
     display: none;
     flex-direction: column;
     overflow: hidden;
-    border-top: 1px solid var(--campus-gray-700);
+    border-top: 1px solid #e8e8e8;
 }
 
 .directions-header {
@@ -296,18 +475,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--campus-gray-700);
-    background: var(--campus-gray-800);
+    border-bottom: 1px solid #e8e8e8;
+    background: #ffffff;
 }
 
 .directions-header h3 {
     font-size: 16px;
     font-weight: 500;
-    color: white;
+    color: #1a1a1a;
 }
 
 .directions-header h3 i {
-    color: var(--campus-accent);
+    color: #4285f4;
     margin-right: 8px;
 }
 
@@ -318,12 +497,11 @@
     padding: 8px;
     border-radius: 50%;
     transition: background 0.2s ease;
-    color: var(--campus-gray-400);
+    color: #5f6368;
 }
 
 .close-btn:hover {
-    background: var(--campus-gray-700);
-    color: var(--campus-error);
+    background: #f0f0f0;
 }
 
 .directions-content {
@@ -336,7 +514,7 @@
     display: flex;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid var(--campus-gray-700);
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .direction-step:last-child {
@@ -345,23 +523,23 @@
 
 .direction-icon {
     width: 28px;
-    color: var(--campus-accent);
+    color: #4285f4;
 }
 
 .direction-text {
     flex: 1;
     font-size: 13px;
-    color: var(--campus-gray-300);
+    color: #3c4043;
     line-height: 1.4;
 }
 
 .direction-distance {
     font-size: 12px;
-    color: var(--campus-gray-500);
+    color: #5f6368;
 }
 
 .route-summary {
-    background: var(--campus-gray-700);
+    background: #f8f9fa;
     padding: 12px;
     border-radius: 12px;
     margin-bottom: 16px;
@@ -369,16 +547,16 @@
 
 .route-summary .distance {
     font-weight: 600;
-    color: var(--campus-accent);
+    color: #1a1a1a;
 }
 
 .route-summary .duration {
-    color: var(--campus-gray-400);
+    color: #5f6368;
     font-size: 13px;
 }
 
 .placeholder-text {
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     text-align: center;
     padding: 40px 20px;
     font-size: 14px;
@@ -387,8 +565,8 @@
 /* Panel Footer - Legend */
 .panel-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--campus-gray-700);
-    background: var(--campus-gray-800);
+    border-top: 1px solid #e8e8e8;
+    background: #ffffff;
 }
 
 .legend {
@@ -402,7 +580,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: var(--campus-gray-400);
+    color: #5f6368;
 }
 
 .legend-dot {
@@ -412,25 +590,25 @@
 }
 
 .legend-dot.user-dot {
-    background: var(--campus-accent);
-    box-shadow: 0 0 0 2px var(--campus-gray-800), 0 0 0 4px rgba(0, 240, 255, 0.3);
+    background: #4285f4;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px rgba(66, 133, 244, 0.3);
 }
 
 .legend-dot.destination-dot {
-    background: #FF1744;
+    background: #34a853;
 }
 
 .legend-line {
     width: 20px;
     height: 2px;
-    background: var(--campus-accent);
+    background: #4285f4;
 }
 
 /* Map Container */
 .map-container {
     flex: 1;
     position: relative;
-    background: #1a1a1a;
+    background: #f0f2f5;
 }
 
 #map {
@@ -452,22 +630,21 @@
 .control-btn {
     width: 40px;
     height: 40px;
-    background: var(--campus-gray-800);
-    border: 1px solid var(--campus-gray-700);
+    background: white;
+    border: 1px solid #dadce0;
     border-radius: 8px;
     cursor: pointer;
     font-size: 18px;
-    color: white;
+    color: #5f6368;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .control-btn:hover {
-    background: var(--campus-accent);
-    color: var(--campus-primary-dark);
+    background: #f5f5f5;
     transform: scale(1.02);
 }
 
@@ -477,13 +654,12 @@
     bottom: 20px;
     left: 20px;
     z-index: 1000;
-    background: var(--campus-gray-800);
+    background: white;
     border-radius: 28px;
     padding: 4px;
     display: flex;
     gap: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--campus-gray-700);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .map-type-btn {
@@ -494,17 +670,13 @@
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    color: var(--campus-gray-400);
+    color: #5f6368;
     transition: all 0.2s ease;
 }
 
 .map-type-btn.active {
-    background: var(--campus-accent);
-    color: var(--campus-primary-dark);
-}
-
-.map-type-btn:hover:not(.active) {
-    color: var(--campus-accent);
+    background: #4285f4;
+    color: white;
 }
 
 /* Floating Search Bar (Mobile Only) */
@@ -517,10 +689,10 @@
     max-width: 500px;
     z-index: 10001;
     display: none;
-    background: var(--campus-gray-800);
+    background: white;
     border-radius: 32px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--campus-gray-700);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e8e8e8;
 }
 
 .floating-search-input-wrapper {
@@ -533,7 +705,7 @@
 .floating-search-input-wrapper i {
     position: absolute;
     left: 16px;
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     font-size: 16px;
 }
 
@@ -545,7 +717,6 @@
     font-size: 16px;
     font-family: inherit;
     background: transparent;
-    color: white;
 }
 
 .floating-search-input-wrapper input:focus {
@@ -553,13 +724,13 @@
 }
 
 .floating-search-input-wrapper input::placeholder {
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
 }
 
 .floating-search-close {
     background: none;
     border: none;
-    color: var(--campus-gray-500);
+    color: #9aa0a6;
     cursor: pointer;
     padding: 8px 12px;
     font-size: 16px;
@@ -568,14 +739,14 @@
 }
 
 .floating-search-close:hover {
-    background: var(--campus-gray-700);
-    color: var(--campus-error);
+    background: #f5f5f5;
+    color: #ea4335;
 }
 
 .floating-search-results {
     max-height: 300px;
     overflow-y: auto;
-    border-top: 1px solid var(--campus-gray-700);
+    border-top: 1px solid #e8e8e8;
     display: none;
 }
 
@@ -589,10 +760,10 @@
     top: 0;
     left: 0;
     right: 0;
-    background: var(--campus-gray-800);
+    background: white;
     z-index: 10001;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--campus-gray-700);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e8e8e8;
     display: none;
 }
 
@@ -610,20 +781,20 @@
 }
 
 .direction-info i {
-    color: var(--campus-accent);
+    color: #4285f4;
     font-size: 18px;
 }
 
 .direction-info span {
     font-weight: 600;
     font-size: 16px;
-    color: white;
+    color: #1a1a1a;
 }
 
 .direction-close-btn {
     background: none;
     border: none;
-    color: var(--campus-gray-400);
+    color: #5f6368;
     cursor: pointer;
     padding: 8px;
     border-radius: 50%;
@@ -631,49 +802,47 @@
 }
 
 .direction-close-btn:hover {
-    background: var(--campus-gray-700);
-    color: var(--campus-error);
+    background: #f5f5f5;
+    color: #ea4335;
 }
 
 .direction-summary {
     padding: 8px 16px 12px;
-    background: var(--campus-gray-700);
+    background: #f8f9fa;
     font-size: 13px;
-    color: var(--campus-gray-300);
-    border-top: 1px solid var(--campus-gray-600);
+    color: #5f6368;
+    border-top: 1px solid #e8e8e8;
     display: flex;
     justify-content: space-between;
 }
 
 /* Map Preloader */
 .map-preloader {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(13, 13, 13, 0.95);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    transition: opacity 0.3s ease;
 }
 
 .map-preloader.hide {
     opacity: 0;
     visibility: hidden;
-    display: none;
 }
 
-.map-preloader-container {
+.preloader-content {
     text-align: center;
 }
 
 .compass-spinner {
     font-size: 48px;
-    color: var(--campus-accent);
+    color: #4285f4;
     animation: spin 1.5s linear infinite;
     margin-bottom: 16px;
 }
@@ -683,34 +852,34 @@
     to { transform: rotate(360deg); }
 }
 
-/* Location Modal */
+/* Location Restriction Modal */
 .location-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(5px);
-    z-index: 10000;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 20000;
     display: none;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
 }
 
 .location-modal-content {
+    background: white;
+    border-radius: 24px;
     max-width: 400px;
     width: 90%;
-    padding: 30px;
+    padding: 28px;
     text-align: center;
-    animation: slideUp 0.3s ease;
 }
 
 .location-modal-icon {
-    width: 70px;
-    height: 70px;
-    background: rgba(255, 23, 68, 0.15);
+    width: 64px;
+    height: 64px;
+    background: #feefef;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -719,29 +888,31 @@
 }
 
 .location-modal-icon i {
-    font-size: 35px;
-    color: #FF1744;
+    font-size: 28px;
+    color: #ea4335;
 }
 
 .location-modal-content h3 {
+    font-size: 20px;
     margin-bottom: 10px;
-    color: #FFD600;
+    color: #1a1a1a;
+}
+
+.location-modal-content p {
+    color: #5f6368;
+    font-size: 14px;
+    margin-bottom: 16px;
 }
 
 .location-distance {
-    background: rgba(0, 240, 255, 0.1);
-    padding: 8px 15px;
+    background: #e8f0fe;
+    padding: 8px 16px;
     border-radius: 30px;
     display: inline-block;
-    margin: 15px auto;
+    margin: 8px auto;
     font-size: 14px;
-    color: var(--campus-accent);
-}
-
-.location-warning {
-    font-size: 12px;
-    color: var(--campus-gray-400);
-    margin-top: 15px;
+    color: #4285f4;
+    font-weight: 500;
 }
 
 .location-modal-actions {
@@ -751,62 +922,98 @@
     margin-top: 20px;
 }
 
-/* Notification Toast */
+.btn-primary, .btn-secondary {
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: #4285f4;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3367d6;
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: #5f6368;
+}
+
+.btn-secondary:hover {
+    background: #e8e8e8;
+}
+
+/* Custom Popup */
+.custom-popup .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    padding: 0;
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 12px 16px;
+}
+
+.popup-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.popup-description {
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 10px;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.popup-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-weight: 500;
+}
+
+.popup-btn-primary {
+    background: #4285f4;
+    color: white;
+}
+
+.popup-btn-primary:hover {
+    background: #3367d6;
+}
+
+/* Notifications */
 .notification-toast {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--campus-gray-800);
+    background: white;
     padding: 10px 20px;
     border-radius: 40px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     z-index: 10000;
     animation: slideUp 0.3s ease;
     font-size: 13px;
     font-weight: 500;
-    color: var(--campus-accent);
-    border-left: 3px solid var(--campus-accent);
-}
-
-/* Routing container hidden */
-.leaflet-routing-container {
-    display: none !important;
-}
-
-/* Route line styling */
-.leaflet-routing-line {
-    stroke: var(--campus-accent) !important;
-    stroke-width: 5 !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .map-search-panel {
-        display: none;
-    }
-    
-    .floating-search-bar {
-        display: block;
-    }
-    
-    .map-controls {
-        bottom: 80px;
-    }
-    
-    .map-type-selector {
-        bottom: 20px;
-    }
-    
-    .legend {
-        display: none;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-    .map-search-panel {
-        width: 280px;
-    }
+    white-space: nowrap;
 }
 
 @keyframes slideUp {
@@ -820,21 +1027,95 @@
     }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* Routing container hidden */
+.leaflet-routing-container {
+    display: none !important;
+}
+
+/* Route line styling */
+.leaflet-routing-line {
+    stroke: #4285f4 !important;
+    stroke-width: 5 !important;
+}
+
+/* Responsive - Desktop first, then mobile overrides */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .map-search-panel {
+        width: 280px;
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    /* Hide the search panel by default on mobile */
+    .map-search-panel {
+        display: flex !important;
+        position: fixed;
+        top: 73px;
+        left: 0;
+        transform: translateX(-100%);
+        width: 85%;
+        max-width: 320px;
+        height: calc(100vh - 73px);
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .map-search-panel.open {
+        transform: translateX(0);
+    }
+    
+    /* Show floating search bar */
+    .floating-search-bar {
+        display: block;
+    }
+    
+    /* Adjust map controls position */
+    .map-controls {
+        bottom: 80px;
+    }
+    
+    .map-type-selector {
+        bottom: 20px;
+    }
+    
+    /* Hide legend on mobile */
+    .legend {
+        display: none;
+    }
+    
+    /* Adjust guest notice banner position */
+    .guest-notice-banner {
+        top: 70px;
+    }
+    
+    /* Make notifications wrap on mobile */
+    .notification-toast {
+        white-space: normal;
+        text-align: center;
+        max-width: 90%;
+    }
+    
+    /* Show panel close button on mobile */
+    .panel-close-btn {
+        display: flex !important;
+    }
+    
+    /* Show mobile panel toggle button */
+    .mobile-panel-toggle {
+        display: flex !important;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Map Preloader -->
-<div id="map-preloader" class="map-preloader">
-    <div class="map-preloader-container">
+<div id="mapPreloader" class="map-preloader">
+    <div class="preloader-content">
         <div class="compass-spinner">
             <i class="fas fa-compass"></i>
         </div>
-        <p class="mt-3 text-white-50">Loading campus map...</p>
+        <p>Loading campus map...</p>
     </div>
 </div>
 
@@ -916,8 +1197,7 @@
         </div>
         
         <div class="map-type-selector">
-            <button class="map-type-btn active" data-type="dark">Dark</button>
-            <button class="map-type-btn" data-type="light">Light</button>
+            <button class="map-type-btn active" data-type="street">Street</button>
             <button class="map-type-btn" data-type="satellite">Satellite</button>
         </div>
     </div>
@@ -949,12 +1229,22 @@
     <div id="mobileDirectionSummary" class="direction-summary"></div>
 </div>
 
-<!-- Hidden CSRF token -->
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- Guest Notice Banner (Auto-dismiss after 7s with close button) -->
+<div id="guestNoticeBanner" class="guest-notice-banner">
+    <div class="guest-notice-content">
+        <div class="guest-notice-text">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>Guest Mode</strong> — <a href="{{ url_for('auth.login_page') }}">Login</a> to save favorites</span>
+        </div>
+        <button id="closeGuestNotice" class="guest-notice-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
 
 <!-- Location Restriction Modal -->
 <div id="locationRestrictionModal" class="location-modal">
-    <div class="location-modal-content campus-glass-card">
+    <div class="location-modal-content">
         <div class="location-modal-icon">
             <i class="fas fa-map-marker-alt"></i>
         </div>
@@ -963,8 +1253,8 @@
         <div class="location-distance" id="locationDistance"></div>
         <p class="location-warning">Campus Compass is designed for navigation within LASU campus. Some features may be limited.</p>
         <div class="location-modal-actions">
-            <button class="btn-campus-outline-light" onclick="closeLocationModal()">Dismiss</button>
-            <button class="btn-campus-accent" onclick="proceedAnyway()">Continue Anyway</button>
+            <button class="btn-secondary" id="dismissModalBtn">Dismiss</button>
+            <button class="btn-primary" id="proceedAnywayBtn">Continue Anyway</button>
         </div>
     </div>
 </div>
@@ -973,11 +1263,9 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-
 <script>
 // ============================================
-// CAMPUS COMPASS - AUTHENTICATED MAP
-// Google Maps Style with Dark Theme
+// CAMPUS COMPASS - GUEST MAP
 // ============================================
 
 let map;
@@ -1020,13 +1308,7 @@ function distanceFromLASU(lat, lng) {
 }
 
 // MAP TILE LAYERS
-const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OSM & CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
-});
-
-const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OSM & CARTO',
     subdomains: 'abcd',
     maxZoom: 19
@@ -1040,9 +1322,9 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
 // CUSTOM MARKER ICONS
 const userIcon = L.divIcon({
     html: `<div style="position: relative;">
-                <div style="background-color: #00F0FF; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0D0D0D; box-shadow: 0 0 20px #00F0FF;"></div>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: #0D0D0D; border-radius: 50%;"></div>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(0, 240, 255, 0.2); animation: pulse 1.5s infinite;"></div>
+                <div style="background-color: #4285f4; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 20px #4285f4;"></div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: white; border-radius: 50%;"></div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(66, 133, 244, 0.2); animation: pulse 1.5s infinite;"></div>
             </div>
             <style>
                 @keyframes pulse {
@@ -1055,11 +1337,30 @@ const userIcon = L.divIcon({
 
 const destinationIcon = L.divIcon({
     html: `<div style="position: relative;">
-                <div style="background-color: #FF1744; width: 16px; height: 16px; border-radius: 50%; border: 3px solid #0D0D0D; box-shadow: 0 0 15px #FF1744;"></div>
-                <div style="position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 12px solid #FF1744;"></div>
+                <div style="background-color: #34a853; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px #34a853;"></div>
+                <div style="position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 12px solid #34a853;"></div>
             </div>`,
     iconSize: [24, 30]
 });
+
+// ============================================
+// GUEST NOTICE BANNER - AUTO DISMISS AFTER 7s
+// ============================================
+const guestNotice = document.getElementById('guestNoticeBanner');
+const closeNoticeBtn = document.getElementById('closeGuestNotice');
+
+function dismissGuestNotice() {
+    if (guestNotice) {
+        guestNotice.classList.add('hide');
+    }
+}
+
+if (closeNoticeBtn) {
+    closeNoticeBtn.addEventListener('click', dismissGuestNotice);
+}
+
+// Auto-dismiss after 7 seconds
+setTimeout(dismissGuestNotice, 7000);
 
 // ============================================
 // NOTIFICATION SYSTEM
@@ -1070,8 +1371,8 @@ function showNotification(message, type = 'info') {
     
     const toast = document.createElement('div');
     toast.className = 'notification-toast';
-    toast.style.borderLeftColor = type === 'success' ? '#00E676' : type === 'error' ? '#FF1744' : '#00F0FF';
-    toast.style.color = type === 'success' ? '#00E676' : type === 'error' ? '#FF1744' : '#00F0FF';
+    toast.style.borderLeft = `3px solid ${type === 'success' ? '#34a853' : type === 'error' ? '#ea4335' : '#4285f4'}`;
+    toast.style.color = type === 'success' ? '#34a853' : type === 'error' ? '#ea4335' : '#4285f4';
     toast.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
             <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
@@ -1087,56 +1388,24 @@ function showNotification(message, type = 'info') {
 }
 
 // ============================================
-// MODAL FUNCTIONS
-// ============================================
-function closeLocationModal() {
-    const modal = document.getElementById('locationRestrictionModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function proceedAnyway() {
-    allowNavigation = true;
-    closeLocationModal();
-    showNotification('Navigation enabled. Routes may be approximate.', 'info');
-    if (pendingDestination) {
-        const { lat, lng, name } = pendingDestination;
-        pendingDestination = null;
-        setDestination(lat, lng, name);
-    }
-}
-
-// ============================================
 // MAP INITIALIZATION
 // ============================================
 function initMap() {
     map = L.map('map').setView([LASU_BOUNDS.center.lat, LASU_BOUNDS.center.lng], 15);
-    currentTileLayer = darkLayer;
+    currentTileLayer = streetLayer;
     currentTileLayer.addTo(map);
     
     isMapReady = true;
     checkReady();
-    
     loadCampusData();
     getUserLocation();
     setupEventListeners();
     setupMobileSearch();
-    addCampusBoundary();
-}
-
-function addCampusBoundary() {
-    const bounds = [[LASU_BOUNDS.minLat, LASU_BOUNDS.minLng], [LASU_BOUNDS.maxLat, LASU_BOUNDS.maxLng]];
-    L.rectangle(bounds, {
-        color: "#00F0FF",
-        weight: 2,
-        opacity: 0.8,
-        fillColor: "#00F0FF",
-        fillOpacity: 0.05
-    }).bindPopup("<strong>LASU Ojo Campus</strong>").addTo(map);
 }
 
 function checkReady() {
     if (isMapReady && isDataLoaded) {
-        const preloader = document.getElementById('map-preloader');
+        const preloader = document.getElementById('mapPreloader');
         if (preloader) preloader.classList.add('hide');
     }
 }
@@ -1170,9 +1439,7 @@ function setupEventListeners() {
             document.querySelectorAll('.map-type-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             map.removeLayer(currentTileLayer);
-            if (btn.dataset.type === 'dark') currentTileLayer = darkLayer;
-            else if (btn.dataset.type === 'light') currentTileLayer = lightLayer;
-            else currentTileLayer = satelliteLayer;
+            currentTileLayer = btn.dataset.type === 'street' ? streetLayer : satelliteLayer;
             currentTileLayer.addTo(map);
             showNotification(`Switched to ${btn.dataset.type} view`, 'info');
         });
@@ -1197,6 +1464,28 @@ function setupEventListeners() {
     
     const refreshBtn = document.getElementById('refreshRandomLocations');
     if (refreshBtn) refreshBtn.addEventListener('click', () => displayRandomLocations());
+    
+    const dismissBtn = document.getElementById('dismissModalBtn');
+    if (dismissBtn) dismissBtn.addEventListener('click', closeLocationModal);
+    
+    const proceedBtn = document.getElementById('proceedAnywayBtn');
+    if (proceedBtn) proceedBtn.addEventListener('click', proceedAnyway);
+}
+
+function closeLocationModal() {
+    const modal = document.getElementById('locationRestrictionModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function proceedAnyway() {
+    allowNavigation = true;
+    closeLocationModal();
+    showNotification('Navigation enabled. Routes may be approximate.', 'info');
+    if (pendingDestination) {
+        const { lat, lng, name } = pendingDestination;
+        pendingDestination = null;
+        setDestination(lat, lng, name);
+    }
 }
 
 // ============================================
@@ -1207,7 +1496,7 @@ async function loadCampusData() {
         const response = await fetch('/static/data/campus_data.json');
         const data = await response.json();
         buildingsData = data.buildings;
-        console.log(`✅ Loaded ${buildingsData.length} buildings`);
+        console.log(`Loaded ${buildingsData.length} buildings`);
         displayRandomLocations();
         isDataLoaded = true;
         checkReady();
@@ -1295,7 +1584,7 @@ function getUserLocation() {
                 addUserMarker();
                 if (locationStatus) {
                     locationStatus.innerHTML = '📍 You are on LASU Campus';
-                    locationStatus.style.color = '#00F0FF';
+                    locationStatus.style.color = '#34a853';
                 }
                 showNotification('Welcome to LASU Campus!', 'success');
             } else {
@@ -1304,7 +1593,7 @@ function getUserLocation() {
                 const distanceKm = distance.toFixed(1);
                 if (locationStatus) {
                     locationStatus.innerHTML = `📍 ${distanceKm}km from LASU Campus`;
-                    locationStatus.style.color = '#FF1744';
+                    locationStatus.style.color = '#ea4335';
                 }
                 showNotification(`You are ${distanceKm}km from LASU Campus.`, 'warning');
             }
@@ -1421,7 +1710,7 @@ function drawRoute(destLat, destLng, destName) {
         routeWhileDragging: false,
         showAlternatives: false,
         lineOptions: {
-            styles: [{ color: '#00F0FF', weight: 5, opacity: 0.9 }],
+            styles: [{ color: '#4285f4', weight: 5, opacity: 0.9 }],
             extendToWaypoints: true
         },
         createMarker: function() { return null; },
@@ -1703,9 +1992,119 @@ document.addEventListener('click', (e) => {
 window.setDestination = setDestination;
 window.selectBuilding = selectBuilding;
 window.selectBuildingMobile = selectBuildingMobile;
-window.closeLocationModal = closeLocationModal;
-window.proceedAnyway = proceedAnyway;
 
-document.addEventListener('DOMContentLoaded', initMap);
+// ============================================
+// MOBILE SEARCH PANEL TOGGLE
+// ============================================
+
+let panelOverlay = null;
+let searchPanel = document.querySelector('.map-search-panel');
+let floatingSearch = document.querySelector('.floating-search-bar');
+
+function initMobilePanel() {
+    if (window.innerWidth > 768) return;
+    
+    // Create overlay if it doesn't exist
+    if (!document.querySelector('.map-panel-overlay')) {
+        panelOverlay = document.createElement('div');
+        panelOverlay.className = 'map-panel-overlay';
+        document.body.appendChild(panelOverlay);
+        
+        panelOverlay.addEventListener('click', closeSearchPanel);
+    }
+    
+    // Add toggle button to map container if not exists
+    const mapContainer = document.querySelector('.map-container');
+    if (mapContainer && !document.querySelector('.mobile-panel-toggle')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'mobile-panel-toggle';
+        toggleBtn.innerHTML = '<i class="fas fa-search"></i>';
+        toggleBtn.title = 'Search locations';
+        toggleBtn.addEventListener('click', openSearchPanel);
+        mapContainer.appendChild(toggleBtn);
+    }
+    
+    // Add close button to panel header if not exists
+    const panelHeader = document.querySelector('.map-search-panel .panel-header');
+    if (panelHeader && !panelHeader.querySelector('.panel-close-btn')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'panel-close-btn';
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.addEventListener('click', closeSearchPanel);
+        panelHeader.appendChild(closeBtn);
+    }
+}
+
+function openSearchPanel() {
+    if (searchPanel) {
+        searchPanel.classList.add('open');
+        if (panelOverlay) panelOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Hide floating search when panel is open
+        if (floatingSearch) floatingSearch.style.display = 'none';
+    }
+}
+
+function closeSearchPanel() {
+    if (searchPanel) {
+        searchPanel.classList.remove('open');
+        if (panelOverlay) panelOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        // Show floating search when panel is closed
+        if (floatingSearch && window.innerWidth <= 768) {
+            floatingSearch.style.display = 'block';
+        }
+    }
+}
+
+// ============================================
+// DETECT BASE SIDEBAR OPEN/CLOSE
+// ============================================
+function observeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (sidebar.classList.contains('open')) {
+                        document.body.classList.add('sidebar-open');
+                        // Also close our search panel when sidebar opens
+                        if (searchPanel && searchPanel.classList.contains('open')) {
+                            closeSearchPanel();
+                        }
+                    } else {
+                        document.body.classList.remove('sidebar-open');
+                    }
+                }
+            });
+        });
+        observer.observe(sidebar, { attributes: true });
+    }
+}
+
+// Handle window resize
+window.addEventListener('resize', function() {
+    if (window.innerWidth <= 768) {
+        initMobilePanel();
+    } else {
+        // On desktop, ensure panel is visible and no overlay
+        if (searchPanel) {
+            searchPanel.classList.remove('open');
+            searchPanel.style.transform = '';
+        }
+        if (panelOverlay) panelOverlay.classList.remove('active');
+        if (floatingSearch) floatingSearch.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initMobilePanel();
+    observeSidebar();
+    initMap();
+});
 </script>
 {% endblock %}

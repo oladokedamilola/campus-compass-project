@@ -23,9 +23,21 @@
                         <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
                             <i class="fas fa-id-card" style="color: var(--campus-gray-500);"></i>
                         </span>
-                        <input type="text" class="form-control form-control-campus border-start-0" 
-                               id="matric_number" name="matric_number" placeholder="e.g., 202167921" required>
+                        <input type="text" 
+                               class="form-control form-control-campus border-start-0" 
+                               id="matric_number" 
+                               name="matric_number" 
+                               placeholder="e.g., 202167921" 
+                               maxlength="9"
+                               pattern="\d{9}"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               required>
                     </div>
+                    <small class="text-white-50 mt-1 d-block">
+                        <i class="fas fa-info-circle me-1"></i>Enter your <strong class="text-accent">9-digit</strong> LASU matric number
+                    </small>
+                    <div id="matricError" class="small mt-1" style="color: #FF1744; display: none;"></div>
                 </div>
                 
                 <div class="mb-3">
@@ -36,6 +48,9 @@
                         </span>
                         <input type="password" class="form-control form-control-campus border-start-0" 
                                id="password" name="password" placeholder="••••••" required>
+                        <button class="btn btn-outline-secondary toggle-password" type="button" style="background: transparent; border-color: var(--campus-gray-600);">
+                            <i class="fas fa-eye-slash" style="color: var(--campus-gray-500);"></i>
+                        </button>
                     </div>
                 </div>
                 
@@ -61,16 +76,191 @@
                         Create one now
                     </a>
                 </p>
+                <hr class="my-4" style="border-color: var(--campus-gray-700);">
+                <p class="mb-0">
+                    <a href="{{ url_for('auth.staff_login_page') }}" class="text-decoration-none small" style="color: var(--campus-accent);">
+                        <i class="fas fa-user-shield"></i> Staff / Admin Login
+                    </a>
+                </p>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.text-accent {
+    color: var(--campus-accent);
+}
+
+/* Toggle password button */
+.toggle-password {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.toggle-password:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--campus-accent);
+}
+
+.toggle-password:hover i {
+    color: var(--campus-accent) !important;
+}
+
+/* Valid/Invalid input styling */
+#matric_number.valid {
+    border-color: #00E676;
+}
+
+#matric_number.invalid {
+    border-color: #FF1744;
+}
+
+/* Form check styling */
+.form-check-input {
+    background-color: var(--campus-gray-700);
+    border-color: var(--campus-gray-600);
+}
+
+.form-check-input:checked {
+    background-color: var(--campus-accent);
+    border-color: var(--campus-accent);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 240, 255, 0.25);
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
+const matricInput = document.getElementById('matric_number');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const matricError = document.getElementById('matricError');
+
+// Function to validate matric number format (exactly 9 digits)
+function isValidMatricFormat(value) {
+    const matricRegex = /^\d{9}$/;
+    return matricRegex.test(value);
+}
+
+// Function to get CSRF token
+function getCsrfToken() {
+    const tokenElement = document.querySelector('[name=csrf_token]');
+    return tokenElement ? tokenElement.value : '';
+}
+
+// Real-time matric number validation and cleaning
+matricInput.addEventListener('input', (e) => {
+    let value = matricInput.value;
+    
+    // Remove any non-digit characters
+    value = value.replace(/\D/g, '');
+    
+    // Limit to exactly 9 digits
+    if (value.length > 9) {
+        value = value.slice(0, 9);
+    }
+    
+    // Update input value with cleaned digits only
+    matricInput.value = value;
+    
+    // Remove previous styling
+    matricInput.classList.remove('valid', 'invalid');
+    matricError.style.display = 'none';
+    
+    // Validate format
+    if (value.length > 0 && value.length < 9) {
+        matricError.innerHTML = `<i class="fas fa-info-circle"></i> Matric number must be exactly 9 digits (currently ${value.length}/9)`;
+        matricError.style.display = 'block';
+        matricInput.classList.add('invalid');
+    } else if (value.length === 9 && !isValidMatricFormat(value)) {
+        matricError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid format. Please enter exactly 9 digits.';
+        matricError.style.display = 'block';
+        matricInput.classList.add('invalid');
+    } else if (value.length === 9 && isValidMatricFormat(value)) {
+        matricInput.classList.add('valid');
+        matricError.style.display = 'none';
+    } else {
+        matricInput.classList.remove('valid', 'invalid');
+    }
+});
+
+// Paste event handler to clean pasted content
+matricInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+    // Extract only digits and limit to 9
+    const digitsOnly = pastedText.replace(/\D/g, '').slice(0, 9);
+    matricInput.value = digitsOnly;
+    // Trigger input event to run validation
+    const inputEvent = new Event('input', { bubbles: true });
+    matricInput.dispatchEvent(inputEvent);
+});
+
+// Toggle password visibility
+function setupPasswordToggle() {
+    const toggleButton = document.querySelector('.toggle-password');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            const input = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        });
+    }
+}
+
+// Form submission
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    const matricNumber = matricInput.value.trim();
+    const password = passwordInput.value;
+    const remember = document.getElementById('remember').checked;
+    
+    // Validate matric number format
+    if (!matricNumber) {
+        if (typeof notify !== 'undefined') {
+            notify.error('Please enter your matric number');
+        } else {
+            alert('Please enter your matric number');
+        }
+        matricInput.focus();
+        return;
+    }
+    
+    if (!isValidMatricFormat(matricNumber)) {
+        if (typeof notify !== 'undefined') {
+            notify.error('Matric number must be exactly 9 digits');
+        } else {
+            alert('Matric number must be exactly 9 digits');
+        }
+        matricInput.focus();
+        return;
+    }
+    
+    if (!password) {
+        if (typeof notify !== 'undefined') {
+            notify.error('Please enter your password');
+        } else {
+            alert('Please enter your password');
+        }
+        passwordInput.focus();
+        return;
+    }
     
     const btn = document.getElementById('loginBtn');
     const originalText = btn.innerHTML;
@@ -78,55 +268,68 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
     btn.disabled = true;
     
-    const data = {
-        matric_number: document.getElementById('matric_number').value.trim().toUpperCase(),
-        password: document.getElementById('password').value,
-        remember: document.getElementById('remember').checked
-    };
-    
-    if (!data.matric_number || !data.password) {
-        notify.error('Please fill in all fields');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        return;
-    }
-    
     try {
         const response = await fetch('/auth/login', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+                'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                matric_number: matricNumber,
+                password: password,
+                remember: remember
+            })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            notify.success(result.message);
+            if (typeof notify !== 'undefined') {
+                notify.success(result.message);
+            }
             setTimeout(() => {
                 window.location.href = result.redirect;
             }, 500);
         } else {
-            notify.error(result.message);
+            if (typeof notify !== 'undefined') {
+                notify.error(result.message);
+            } else {
+                alert(result.message);
+            }
             btn.innerHTML = originalText;
             btn.disabled = false;
-            document.getElementById('password').value = '';
+            // Clear password field on failed login
+            passwordInput.value = '';
+            passwordInput.focus();
         }
     } catch (error) {
         console.error('Login error:', error);
-        notify.error('Network error. Please try again.');
+        if (typeof notify !== 'undefined') {
+            notify.error('Network error. Please try again.');
+        } else {
+            alert('Network error. Please try again.');
+        }
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
 });
 
 // Enter key support
-document.getElementById('password').addEventListener('keypress', (e) => {
+passwordInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
 });
+
+matricInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        passwordInput.focus();
+    }
+});
+
+// Initialize
+setupPasswordToggle();
 </script>
 {% endblock %}

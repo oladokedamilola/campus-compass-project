@@ -176,6 +176,17 @@
       "year_of_admission": 2022,
       "is_active": true,
       "has_registered": false
+    },
+     {
+      "matric_number": "200591097",
+      "full_name": "Oladoke Damilola Joshua",
+      "email": "damilola.oladoke@lasu.edu.ng",
+      "faculty": "Computing Sciences",
+      "department": "Computer Science",
+      "phone": "08123456789",
+      "year_of_admission": 2020,
+      "is_active": true,
+      "has_registered": false
     }
   ]
 }
