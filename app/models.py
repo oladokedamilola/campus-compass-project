@@ -1,3 +1,4 @@
+# app/models.py
 """
 Campus Compass - Database Models
 User model with role-based access (Student/Admin)

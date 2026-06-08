@@ -9,15 +9,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Campus Compass">
 
-
-    <!-- Prevent page caching -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <!-- Force no caching - multiple layers -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, private, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Clear-Site-Data" content="cache">
     
     <!-- CSRF Token Meta Tag - CRITICAL for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Debug: CSRF token exists: {{ csrf_token() if csrf_token() else 'NOT FOUND' }} -->
     
     <title>Campus Compass - {% block title %}{% endblock %}</title>
     
@@ -55,9 +54,79 @@
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/icons/icon-192.png') }}">
     <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='images/icons/icon-512.png') }}">
 
+    <style>
+        /* Auth-aware UI control - hide/show based on authentication state */
+        body[data-auth="true"] .guest-only {
+            display: none !important;
+        }
+        
+        body[data-auth="false"] .auth-only {
+            display: none !important;
+        }
+        
+        /* Prevent flash of incorrect content */
+        .nav-link, .mobile-drawer-nav li {
+            transition: none !important;
+        }
+    </style>
+
     {% block extra_css %}{% endblock %}
 </head>
-<body class="public-body">
+<body class="public-body" data-auth="{% if current_user.is_authenticated %}true{% else %}false{% endif %}">
+    
+    <!-- CLIENT-SIDE SESSION VALIDATION - MUST BE FIRST SCRIPT AFTER BODY -->
+    <script>
+        (async function() {
+            try {
+                const response = await fetch('/auth/check-session', {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store',
+                        'Pragma': 'no-cache',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                sessionStorage.setItem('user_authenticated', data.authenticated);
+                sessionStorage.setItem('user_type', data.user_type || '');
+                
+                const currentPath = window.location.pathname;
+                const isAuthPage = currentPath.includes('/auth/login') || 
+                                  currentPath.includes('/auth/register') || 
+                                  currentPath.includes('/auth/verify-matric') ||
+                                  currentPath.includes('/auth/staff-login');
+                
+                const isProtectedPage = currentPath.includes('/dashboard') ||
+                                       currentPath.includes('/profile') ||
+                                       currentPath.includes('/favorites') ||
+                                       currentPath.includes('/admin') ||
+                                       currentPath === '/map' ||
+                                       currentPath === '/map/' ||
+                                       currentPath === '/locations' ||
+                                       currentPath === '/locations/';
+                
+                if (data.authenticated && isAuthPage) {
+                    console.log('Authenticated user on auth page, redirecting...');
+                    window.location.href = data.redirect_url;
+                    return;
+                }
+                
+                if (!data.authenticated && isProtectedPage) {
+                    console.log('Unauthenticated user on protected page, redirecting...');
+                    window.location.href = '/auth/login';
+                    return;
+                }
+                
+                document.body.setAttribute('data-auth', data.authenticated ? 'true' : 'false');
+                
+            } catch (error) {
+                console.error('Session check failed:', error);
+            }
+        })();
+    </script>
+    
     <!-- General Preloader -->
     <div id="general-preloader" class="preloader">
         <div class="preloader-container">
@@ -121,13 +190,13 @@
         </div>
     </div>
     
-    <!-- Flash Messages Container (Fixed Top Center) -->
+    <!-- Flash Messages Container -->
     <div id="flash-container" class="flash-container"></div>
     
     <!-- Mobile Menu Overlay -->
     <div id="mobile-menu-overlay" class="mobile-menu-overlay"></div>
     
-    <!-- Mobile Drawer - Authentication Aware -->
+    <!-- Mobile Drawer -->
     <div id="mobile-drawer" class="mobile-drawer">
         <div class="mobile-drawer-header">
             <div class="mobile-drawer-logo">
@@ -140,30 +209,28 @@
         </div>
         <div class="mobile-drawer-divider"></div>
         <ul class="mobile-drawer-nav">
-            {% if current_user.is_authenticated %}
-                <!-- Logged-in user menu -->
-                <li><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('map.index') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
-                <li><a href="{{ url_for('main.locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
-                <li><a href="{{ url_for('dashboard.favorites') }}"><i class="fas fa-heart"></i> My Favorites</a></li>
-                <li><a href="{{ url_for('dashboard.profile') }}"><i class="fas fa-user-circle"></i> My Profile</a></li>
-                {% if current_user.is_admin() %}
-                    <li class="mobile-drawer-divider"></li>
-                    <li><a href="{{ url_for('admin.index') }}"><i class="fas fa-crown"></i> Admin Dashboard</a></li>
-                    <li><a href="{{ url_for('admin.manage_users') }}"><i class="fas fa-users"></i> Manage Users</a></li>
-                    <li><a href="{{ url_for('admin.campus_data') }}"><i class="fas fa-building"></i> Campus Data Editor</a></li>
-                {% endif %}
-                <li class="mobile-drawer-divider"></li>
-                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            {% else %}
-                <!-- Guest menu -->
-                <li><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="{{ url_for('map.public_map') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
-                <li><a href="{{ url_for('main.public_locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
-                <li class="mobile-drawer-divider"></li>
-                <li><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                <li><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+            <!-- Auth-only menu items -->
+            <li class="auth-only"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li class="auth-only"><a href="{{ url_for('map.index') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
+            <li class="auth-only"><a href="{{ url_for('main.locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
+            <li class="auth-only"><a href="{{ url_for('dashboard.favorites') }}"><i class="fas fa-heart"></i> My Favorites</a></li>
+            <li class="auth-only"><a href="{{ url_for('dashboard.profile') }}"><i class="fas fa-user-circle"></i> My Profile</a></li>
+            {% if current_user.is_authenticated and current_user.is_admin() %}
+                <li class="mobile-drawer-divider auth-only"></li>
+                <li class="auth-only"><a href="{{ url_for('admin.index') }}"><i class="fas fa-crown"></i> Admin Dashboard</a></li>
+                <li class="auth-only"><a href="{{ url_for('admin.manage_users') }}"><i class="fas fa-users"></i> Manage Users</a></li>
+                <li class="auth-only"><a href="{{ url_for('admin.campus_data') }}"><i class="fas fa-building"></i> Campus Data Editor</a></li>
             {% endif %}
+            <li class="mobile-drawer-divider auth-only"></li>
+            <li class="auth-only"><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            
+            <!-- Guest-only menu items -->
+            <li class="guest-only"><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
+            <li class="guest-only"><a href="{{ url_for('map.public_map') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
+            <li class="guest-only"><a href="{{ url_for('main.public_locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
+            <li class="mobile-drawer-divider guest-only"></li>
+            <li class="guest-only"><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+            <li class="guest-only"><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
         </ul>
         <div class="mobile-drawer-footer">
             <div class="mobile-drawer-version">
@@ -172,7 +239,7 @@
         </div>
     </div>
     
-    <!-- Top Navigation Bar (Public) - Authentication Aware -->
+    <!-- Top Navigation Bar -->
     <nav class="public-navbar">
         <div class="navbar-container">
             <!-- Logo -->
@@ -186,76 +253,73 @@
                 </div>
             </a>
             
-            <!-- Desktop Navigation Links - Authentication Aware -->
+            <!-- Desktop Navigation Links -->
             <div class="navbar-links desktop-only">
-                {% if current_user.is_authenticated %}
-                    <!-- Logged-in user desktop menu -->
-                    <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="{{ url_for('map.index') }}" class="nav-link {% if request.endpoint == 'map.index' %}active{% endif %}">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Map</span>
-                    </a>
-                    <a href="{{ url_for('main.locations') }}" class="nav-link {% if request.endpoint == 'main.locations' %}active{% endif %}">
-                        <i class="fas fa-building"></i>
-                        <span>Locations</span>
-                    </a>
-                    <a href="{{ url_for('dashboard.favorites') }}" class="nav-link {% if request.endpoint == 'dashboard.favorites' %}active{% endif %}">
-                        <i class="fas fa-heart"></i>
-                        <span>Favorites</span>
-                    </a>
-                    <a href="{{ url_for('dashboard.profile') }}" class="nav-link {% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Profile</span>
-                    </a>
-                    {% if current_user.is_admin() %}
-                        <div class="nav-divider"></div>
-                        <a href="{{ url_for('admin.index') }}" class="nav-link nav-link-admin {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">
-                            <i class="fas fa-crown"></i>
-                            <span>Admin</span>
-                        </a>
-                    {% endif %}
-                    <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </a>
-                {% else %}
-                    <!-- Guest desktop menu -->
-                    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
-                        <i class="fas fa-home"></i>
-                        <span>Home</span>
-                    </a>
-                    <a href="{{ url_for('map.public_map') }}" class="nav-link {% if request.endpoint == 'map.public_map' %}active{% endif %}">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Map</span>
-                    </a>
-                    <a href="{{ url_for('main.public_locations') }}" class="nav-link {% if request.endpoint == 'main.public_locations' %}active{% endif %}">
-                        <i class="fas fa-building"></i>
-                        <span>Locations</span>
-                    </a>
-                    <div class="nav-divider"></div>
-                    <a href="{{ url_for('auth.login_page') }}" class="nav-link {% if request.endpoint == 'auth.login_page' %}active{% endif %}">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>Login</span>
-                    </a>
-                    <a href="{{ url_for('auth.verify_matric_page') }}" class="nav-link nav-link-highlight {% if request.endpoint == 'auth.verify_matric_page' %}active{% endif %}">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Register</span>
+                <!-- Auth-only menu items -->
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link auth-only {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('map.index') }}" class="nav-link auth-only {% if request.endpoint == 'map.index' %}active{% endif %}">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map</span>
+                </a>
+                <a href="{{ url_for('main.locations') }}" class="nav-link auth-only {% if request.endpoint == 'main.locations' %}active{% endif %}">
+                    <i class="fas fa-building"></i>
+                    <span>Locations</span>
+                </a>
+                <a href="{{ url_for('dashboard.favorites') }}" class="nav-link auth-only {% if request.endpoint == 'dashboard.favorites' %}active{% endif %}">
+                    <i class="fas fa-heart"></i>
+                    <span>Favorites</span>
+                </a>
+                <a href="{{ url_for('dashboard.profile') }}" class="nav-link auth-only {% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                </a>
+                {% if current_user.is_authenticated and current_user.is_admin() %}
+                    <div class="nav-divider auth-only"></div>
+                    <a href="{{ url_for('admin.index') }}" class="nav-link nav-link-admin auth-only {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">
+                        <i class="fas fa-crown"></i>
+                        <span>Admin</span>
                     </a>
                 {% endif %}
+                <div class="nav-divider auth-only"></div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-logout auth-only">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+                
+                <!-- Guest-only menu items -->
+                <a href="{{ url_for('main.index') }}" class="nav-link guest-only {% if request.endpoint == 'main.index' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="{{ url_for('map.public_map') }}" class="nav-link guest-only {% if request.endpoint == 'map.public_map' %}active{% endif %}">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map</span>
+                </a>
+                <a href="{{ url_for('main.public_locations') }}" class="nav-link guest-only {% if request.endpoint == 'main.public_locations' %}active{% endif %}">
+                    <i class="fas fa-building"></i>
+                    <span>Locations</span>
+                </a>
+                <div class="nav-divider guest-only"></div>
+                <a href="{{ url_for('auth.login_page') }}" class="nav-link guest-only {% if request.endpoint == 'auth.login_page' %}active{% endif %}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </a>
+                <a href="{{ url_for('auth.verify_matric_page') }}" class="nav-link nav-link-highlight guest-only {% if request.endpoint == 'auth.verify_matric_page' %}active{% endif %}">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Register</span>
+                </a>
             </div>
             
             <!-- User Greeting (Desktop) -->
-            {% if current_user.is_authenticated %}
-            <div class="user-greeting desktop-only">
+            <div class="user-greeting desktop-only auth-only">
                 <span class="greeting-text">
                     <i class="fas fa-smile-wink"></i> 
-                    Hello, {{ current_user.full_name.split()[0] }}
+                    Hello, {{ current_user.full_name.split()[0] if current_user.is_authenticated else '' }}
                 </span>
             </div>
-            {% endif %}
             
             <!-- Mobile Hamburger Button -->
             <button id="hamburger-btn" class="hamburger-btn mobile-only" aria-label="Menu">
@@ -290,20 +354,18 @@
                         'Cache-Control': 'no-cache'
                     }
                 }).then(() => {
-                    // Force a complete page reload without cache
                     window.location.href = '/auth/login?nocache=' + Date.now();
+                }).catch(() => {
+                    window.location.href = logoutUrl;
                 });
             });
         });
 
-
-        // Global CSRF token helper for AJAX requests
         function getCsrfToken() {
             const metaTag = document.querySelector('meta[name="csrf-token"]');
             if (metaTag) {
                 return metaTag.getAttribute('content');
             }
-            // Fallback: try to get from hidden input
             const hiddenInput = document.querySelector('input[name="csrf_token"]');
             if (hiddenInput) {
                 return hiddenInput.value;
@@ -312,16 +374,13 @@
             return '';
         }
         
-        // Auto-include CSRF token in all fetch requests that need it
-        // Note: This doesn't affect the public verify endpoints since they're exempt
         const originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
-            // Only add CSRF token for same-origin requests that are not GET/HEAD/OPTIONS
-            // and are not the public verify endpoints
             const shouldAddCsrf = options.method && 
                                  !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase()) &&
                                  !url.includes('/auth/check-matric') &&
-                                 !url.includes('/auth/verify-matric');
+                                 !url.includes('/auth/verify-matric') &&
+                                 !url.includes('/auth/check-session');
             
             if (shouldAddCsrf) {
                 const csrfToken = getCsrfToken();
@@ -358,14 +417,12 @@
         if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', closeDrawer);
         if (overlay) overlay.addEventListener('click', closeDrawer);
         
-        // Close on escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && mobileDrawer.classList.contains('open')) {
                 closeDrawer();
             }
         });
         
-        // Close drawer on resize if becoming desktop
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768 && mobileDrawer.classList.contains('open')) {
                 closeDrawer();
@@ -375,7 +432,6 @@
 
     <!-- Flash messages from Flask to JavaScript -->
     <script>
-        // Flash messages from server
         const flashedMessages = [
             {% for message in get_flashed_messages(with_categories=true) %}
                 { category: '{{ message[0] }}', message: '{{ message[1]|safe }}' }{% if not loop.last %},{% endif %}
@@ -385,6 +441,16 @@
     
     <!-- PWA Installation & Offline Detection -->
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+
+    <!-- bfcache prevention -->
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                console.log('Page loaded from bfcache, forcing reload');
+                window.location.reload(true);
+            }
+        });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

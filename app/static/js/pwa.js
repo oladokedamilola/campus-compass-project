@@ -1,4 +1,5 @@
 // Campus Compass - PWA Installation
+// Version: v2.0.0 - Authentication-aware
 
 let deferredPrompt;
 const pwaPrompt = document.getElementById('pwaInstallPrompt');
@@ -6,24 +7,16 @@ const installBtn = document.getElementById('installPwaBtn');
 const closeBtn = document.getElementById('closePwaPrompt');
 const laterBtn = document.getElementById('laterPwaBtn');
 
-function isMobileOrTablet() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-           window.innerWidth <= 1024;
-}
-
+// Check if running as installed PWA
 function isAppInstalled() {
     return window.matchMedia('(display-mode: standalone)').matches || 
            window.navigator.standalone === true;
 }
 
+// Check if should show install prompt
 function shouldShowPrompt() {
     if (isAppInstalled()) {
         console.log('[PWA] App already installed');
-        return false;
-    }
-    
-    if (!isMobileOrTablet()) {
-        console.log('[PWA] Not a mobile or tablet device');
         return false;
     }
     
@@ -58,7 +51,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     }
 });
 
-// Install button click handler
+// Install button handler
 if (installBtn) {
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) {
@@ -71,14 +64,18 @@ if (installBtn) {
         
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`[PWA] User response to install prompt: ${outcome}`);
+        console.log(`[PWA] User response: ${outcome}`);
         
         if (pwaPrompt) pwaPrompt.style.display = 'none';
         deferredPrompt = null;
+        
+        if (outcome === 'accepted') {
+            localStorage.removeItem('pwaPromptDismissed');
+        }
     });
 }
 
-// Close button click handler
+// Close button handler
 if (closeBtn) {
     closeBtn.addEventListener('click', () => {
         if (pwaPrompt) pwaPrompt.style.display = 'none';
@@ -87,7 +84,7 @@ if (closeBtn) {
     });
 }
 
-// Later button click handler
+// Later button handler
 if (laterBtn) {
     laterBtn.addEventListener('click', () => {
         if (pwaPrompt) pwaPrompt.style.display = 'none';
@@ -98,43 +95,69 @@ if (laterBtn) {
 
 // App installed event
 window.addEventListener('appinstalled', () => {
-    console.log('[PWA] Campus Compass was installed successfully!');
+    console.log('[PWA] Campus Compass installed!');
     if (pwaPrompt) pwaPrompt.style.display = 'none';
     localStorage.removeItem('pwaPromptDismissed');
     if (typeof notify !== 'undefined') {
-        notify.success('Campus Compass installed! You can now access it from your home screen.');
+        notify.success('Campus Compass installed! Access from home screen.');
     }
 });
 
-// Check if already installed
-if (isAppInstalled()) {
-    console.log('[PWA] Running as installed PWA');
-}
-
-// Online/Offline detection (optional - keep this for user experience)
+// Online/Offline detection
 window.addEventListener('online', () => {
     console.log('[PWA] Back online');
     if (typeof notify !== 'undefined') {
-        notify.success('Back online! Campus Compass is fully functional.');
+        notify.success('Back online!');
     }
+    // Reload to get fresh auth state
+    window.location.reload();
 });
 
 window.addEventListener('offline', () => {
-    console.log('[PWA] Offline');
+    console.log('[PWA] Offline mode');
     if (typeof notify !== 'undefined') {
-        notify.warning('You are offline. Cached map data is still available.');
+        notify.warning('You are offline. Some features may be limited.');
     }
 });
 
-// Register service worker
+// Register service worker with force update
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
             .then(registration => {
                 console.log('[PWA] Service Worker registered with scope:', registration.scope);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('[PWA] New service worker installing');
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('[PWA] Update available - reload to activate');
+                            if (typeof notify !== 'undefined') {
+                                notify.info('New version available. Reload to update.');
+                            }
+                        }
+                    });
+                });
             })
             .catch(error => {
                 console.log('[PWA] Service Worker registration failed:', error);
             });
+        
+        // Handle controller changes
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            console.log('[PWA] Service worker changed, reloading');
+            window.location.reload();
+        });
     });
+}
+
+// Log current mode
+if (isAppInstalled()) {
+    console.log('[PWA] Running as installed PWA');
 }

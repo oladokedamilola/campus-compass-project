@@ -1,3 +1,4 @@
+# run.py
 """
 Campus Compass - Application Entry Point
 Run with: python run.py (development) or gunicorn run:app (production)

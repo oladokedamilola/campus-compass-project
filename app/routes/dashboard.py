@@ -1,3 +1,4 @@
+# app/routes/dashboard.py
 """
 Campus Compass - Dashboard Routes
 User dashboard with role-based views

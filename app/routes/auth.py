@@ -63,7 +63,9 @@ def is_valid_staff_id(staff_id):
 @auth_bp.route('/verify-matric', methods=['GET'])
 def verify_matric_page():
     """Page to verify matric number before registration"""
+    # Redirect if already logged in
     if current_user.is_authenticated:
+        flash('You are already logged in.', 'info')
         return redirect(url_for('dashboard.index'))
     
     from flask import make_response
@@ -159,6 +161,7 @@ def verify_matric():
 def login_page():
     """Render login page"""
     if current_user.is_authenticated:
+        flash('You are already logged in.', 'info')
         return redirect(url_for('dashboard.index'))
     
     # Create response object from rendered template
@@ -235,6 +238,7 @@ def login():
 def staff_login_page():
     """Render staff/admin login page"""
     if current_user.is_authenticated:
+        flash('You are already logged in.', 'info')
         if current_user.is_admin():
             return redirect(url_for('admin.index'))
         else:
@@ -333,6 +337,7 @@ def staff_login():
 def register_page():
     """Render registration page (after matric verification)"""
     if current_user.is_authenticated:
+        flash('You are already logged in.', 'info')
         return redirect(url_for('dashboard.index'))
     
     # Check if matric was verified
@@ -535,6 +540,25 @@ def logout():
     response.headers['Expires'] = '0'
     return response
 
+
+@auth_bp.route('/check-session', methods=['GET'])
+def check_session():
+    """Check current session status - for client-side validation"""
+    from flask import jsonify
+    
+    if current_user.is_authenticated:
+        return jsonify({
+            'authenticated': True,
+            'user_type': current_user.user_type,
+            'user_name': current_user.full_name.split()[0] if current_user.full_name else '',
+            'is_admin': current_user.is_admin(),
+            'redirect_url': url_for('admin.index') if current_user.is_admin() else url_for('dashboard.index')
+        })
+    else:
+        return jsonify({
+            'authenticated': False,
+            'redirect_url': url_for('auth.login_page')
+        })
 
 # Public endpoint - Exempt from CSRF
 @auth_bp.route('/check-matric', methods=['POST'])

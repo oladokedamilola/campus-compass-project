@@ -809,7 +809,25 @@
 
 {% block extra_js %}
 <script>
-// Slideshow functionality with animation tracking
+// Combined JavaScript for index.html
+// Includes failsafe redirect AND slideshow functionality
+
+// ============================================
+// FAILSAFE: Double-check authentication and redirect if needed
+// ============================================
+(function() {
+    const isAuthenticated = sessionStorage.getItem('user_authenticated') === 'true';
+    const redirectUrl = sessionStorage.getItem('redirect_url');
+    
+    if (isAuthenticated && redirectUrl) {
+        console.log('Failsafe: Authenticated user on home page, redirecting to', redirectUrl);
+        window.location.href = redirectUrl;
+    }
+})();
+
+// ============================================
+// SLIDESHOW FUNCTIONALITY
+// ============================================
 let slideIndex = 0;
 let slideInterval;
 let slides = [];
@@ -822,7 +840,6 @@ function initSlideshow() {
     
     if (slides.length === 0) return;
     
-    // Check which slide should be active
     for (let i = 0; i < slides.length; i++) {
         if (slides[i].classList.contains('active')) {
             slideIndex = i;
@@ -836,80 +853,64 @@ function initSlideshow() {
 function showSlides() {
     if (slides.length === 0) return;
     
-    // Clear any pending animation timeout
     if (animationTimeout) {
         clearTimeout(animationTimeout);
     }
     
-    // Hide all slides
     for (let i = 0; i < slides.length; i++) {
         slides[i].classList.remove('active');
-        // Reset animation by removing and re-adding image
         const img = slides[i].querySelector('.slide-img');
         if (img) {
             img.style.animation = 'none';
         }
     }
     
-    // Remove active class from all dots
     for (let i = 0; i < dots.length; i++) {
         dots[i].classList.remove('active');
     }
     
-    // Increment slide index
     slideIndex++;
     if (slideIndex >= slides.length) {
         slideIndex = 0;
     }
     
-    // Show current slide
     slides[slideIndex].classList.add('active');
     
-    // Re-trigger animation by forcing reflow
     const activeImg = slides[slideIndex].querySelector('.slide-img');
     if (activeImg) {
-        void activeImg.offsetHeight; // Force reflow
+        void activeImg.offsetHeight;
         activeImg.style.animation = '';
     }
     
-    // Add active class to current dot
     if (dots[slideIndex]) {
         dots[slideIndex].classList.add('active');
     }
 }
 
 function currentSlide(n) {
-    // Reset interval
     clearInterval(slideInterval);
     
-    // Clear any pending animation timeout
     if (animationTimeout) {
         clearTimeout(animationTimeout);
     }
     
-    // Hide all slides
     for (let i = 0; i < slides.length; i++) {
         slides[i].classList.remove('active');
-        // Reset animation
         const img = slides[i].querySelector('.slide-img');
         if (img) {
             img.style.animation = 'none';
         }
     }
     
-    // Remove active class from all dots
     for (let i = 0; i < dots.length; i++) {
         dots[i].classList.remove('active');
     }
     
-    // Set new index
     slideIndex = n;
     
-    // Show selected slide
     if (slides[slideIndex]) {
         slides[slideIndex].classList.add('active');
         
-        // Re-trigger animation
         const activeImg = slides[slideIndex].querySelector('.slide-img');
         if (activeImg) {
             void activeImg.offsetHeight;
@@ -917,12 +918,10 @@ function currentSlide(n) {
         }
     }
     
-    // Add active class to selected dot
     if (dots[slideIndex]) {
         dots[slideIndex].classList.add('active');
     }
     
-    // Restart interval
     startSlideshow();
 }
 
@@ -930,16 +929,12 @@ function startSlideshow() {
     if (slideInterval) {
         clearInterval(slideInterval);
     }
-    slideInterval = setInterval(showSlides, 4000); // Change image every 4 seconds
+    slideInterval = setInterval(showSlides, 4000);
 }
 
-// Start the slideshow when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     initSlideshow();
-});
-
-// Pause slideshow on hover
-document.addEventListener('DOMContentLoaded', function() {
+    
     const slideshowContainer = document.querySelector('.slideshow-container');
     if (slideshowContainer) {
         slideshowContainer.addEventListener('mouseenter', function() {
@@ -952,10 +947,7 @@ document.addEventListener('DOMContentLoaded', function() {
             startSlideshow();
         });
     }
-});
-
-// Preload images to ensure smooth transition
-document.addEventListener('DOMContentLoaded', function() {
+    
     const images = document.querySelectorAll('.slide-img');
     images.forEach(img => {
         if (img.complete === false) {
