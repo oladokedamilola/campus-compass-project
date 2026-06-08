@@ -15,7 +15,7 @@
             </div>
             
             <form id="loginForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="csrf_token" id="csrf_token" value="">
                 
                 <div class="mb-3">
                     <label for="matric_number" class="form-label text-white">Matric Number</label>
@@ -94,7 +94,6 @@
     color: var(--campus-accent);
 }
 
-/* Toggle password button */
 .toggle-password {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -109,7 +108,6 @@
     color: var(--campus-accent) !important;
 }
 
-/* Valid/Invalid input styling */
 #matric_number.valid {
     border-color: #00E676;
 }
@@ -118,7 +116,6 @@
     border-color: #FF1744;
 }
 
-/* Form check styling */
 .form-check-input {
     background-color: var(--campus-gray-700);
     border-color: var(--campus-gray-600);
@@ -137,79 +134,117 @@
 
 {% block extra_js %}
 <script>
+// CACHE BUSTING: Check if page is from cache and force reload
+(function() {
+    const pageLoadTime = new Date().getTime();
+    const storedLoadTime = sessionStorage.getItem('lastLoginPageLoad');
+    
+    // If page loaded very quickly after previous load (cached), force reload
+    if (storedLoadTime && (pageLoadTime - parseInt(storedLoadTime)) < 500) {
+        console.log('Page appears to be from cache, forcing reload');
+        sessionStorage.removeItem('lastLoginPageLoad');
+        window.location.reload(true);
+        return;
+    }
+    
+    sessionStorage.setItem('lastLoginPageLoad', pageLoadTime);
+    
+    // Clear any stale CSRF token
+    const csrfInput = document.getElementById('csrf_token');
+    if (csrfInput && csrfInput.value) {
+        console.log('Clearing stale CSRF token');
+        csrfInput.value = '';
+    }
+})();
+
+// Fetch fresh CSRF token
+async function fetchFreshCsrfToken() {
+    try {
+        const response = await fetch('/auth/csrf-token?' + Date.now(), {  // Cache busting
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.csrf_token) {
+                const tokenInput = document.getElementById('csrf_token');
+                if (tokenInput) {
+                    tokenInput.value = data.csrf_token;
+                }
+                console.log('Fresh CSRF token obtained');
+                return data.csrf_token;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+    }
+    return null;
+}
+
+function getCsrfToken() {
+    const tokenInput = document.getElementById('csrf_token');
+    if (tokenInput && tokenInput.value) {
+        return tokenInput.value;
+    }
+    return '';
+}
+
+// On page load, get fresh CSRF token
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Login page loaded - fetching fresh CSRF token');
+    await fetchFreshCsrfToken();
+    const token = getCsrfToken();
+    console.log('CSRF token ready:', token ? 'Yes' : 'No');
+});
+
 const matricInput = document.getElementById('matric_number');
 const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
 const matricError = document.getElementById('matricError');
 
-// Function to validate matric number format (exactly 9 digits)
 function isValidMatricFormat(value) {
     const matricRegex = /^\d{9}$/;
     return matricRegex.test(value);
 }
 
-// Function to get CSRF token
-function getCsrfToken() {
-    const tokenElement = document.querySelector('[name=csrf_token]');
-    return tokenElement ? tokenElement.value : '';
-}
-
-// Real-time matric number validation and cleaning
 matricInput.addEventListener('input', (e) => {
     let value = matricInput.value;
-    
-    // Remove any non-digit characters
     value = value.replace(/\D/g, '');
-    
-    // Limit to exactly 9 digits
     if (value.length > 9) {
         value = value.slice(0, 9);
     }
-    
-    // Update input value with cleaned digits only
     matricInput.value = value;
-    
-    // Remove previous styling
     matricInput.classList.remove('valid', 'invalid');
     matricError.style.display = 'none';
     
-    // Validate format
     if (value.length > 0 && value.length < 9) {
         matricError.innerHTML = `<i class="fas fa-info-circle"></i> Matric number must be exactly 9 digits (currently ${value.length}/9)`;
-        matricError.style.display = 'block';
-        matricInput.classList.add('invalid');
-    } else if (value.length === 9 && !isValidMatricFormat(value)) {
-        matricError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid format. Please enter exactly 9 digits.';
         matricError.style.display = 'block';
         matricInput.classList.add('invalid');
     } else if (value.length === 9 && isValidMatricFormat(value)) {
         matricInput.classList.add('valid');
         matricError.style.display = 'none';
-    } else {
-        matricInput.classList.remove('valid', 'invalid');
     }
 });
 
-// Paste event handler to clean pasted content
 matricInput.addEventListener('paste', (e) => {
     e.preventDefault();
     const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-    // Extract only digits and limit to 9
     const digitsOnly = pastedText.replace(/\D/g, '').slice(0, 9);
     matricInput.value = digitsOnly;
-    // Trigger input event to run validation
     const inputEvent = new Event('input', { bubbles: true });
     matricInput.dispatchEvent(inputEvent);
 });
 
-// Toggle password visibility
 function setupPasswordToggle() {
     const toggleButton = document.querySelector('.toggle-password');
     if (toggleButton) {
         toggleButton.addEventListener('click', function() {
             const input = document.getElementById('password');
             const icon = this.querySelector('i');
-            
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye-slash');
@@ -231,33 +266,26 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const password = passwordInput.value;
     const remember = document.getElementById('remember').checked;
     
-    // Validate matric number format
     if (!matricNumber) {
-        if (typeof notify !== 'undefined') {
-            notify.error('Please enter your matric number');
-        } else {
-            alert('Please enter your matric number');
-        }
+        const msg = 'Please enter your matric number';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
         matricInput.focus();
         return;
     }
     
     if (!isValidMatricFormat(matricNumber)) {
-        if (typeof notify !== 'undefined') {
-            notify.error('Matric number must be exactly 9 digits');
-        } else {
-            alert('Matric number must be exactly 9 digits');
-        }
+        const msg = 'Matric number must be exactly 9 digits';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
         matricInput.focus();
         return;
     }
     
     if (!password) {
-        if (typeof notify !== 'undefined') {
-            notify.error('Please enter your password');
-        } else {
-            alert('Please enter your password');
-        }
+        const msg = 'Please enter your password';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
         passwordInput.focus();
         return;
     }
@@ -268,12 +296,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
     btn.disabled = true;
     
+    let csrfToken = getCsrfToken();
+    
+    if (!csrfToken) {
+        console.log('No CSRF token, fetching fresh one...');
+        csrfToken = await fetchFreshCsrfToken();
+    }
+    
+    console.log('Submitting login with CSRF token:', csrfToken ? 'Present' : 'Missing');
+    
     try {
         const response = await fetch('/auth/login', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
+                'X-CSRFToken': csrfToken || ''
             },
             body: JSON.stringify({
                 matric_number: matricNumber,
@@ -285,39 +322,31 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const result = await response.json();
         
         if (result.success) {
-            if (typeof notify !== 'undefined') {
-                notify.success(result.message);
-            }
+            if (typeof notify !== 'undefined') notify.success(result.message);
             setTimeout(() => {
                 window.location.href = result.redirect;
             }, 500);
         } else {
-            if (typeof notify !== 'undefined') {
-                notify.error(result.message);
-            } else {
-                alert(result.message);
-            }
+            if (typeof notify !== 'undefined') notify.error(result.message);
+            else alert(result.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
-            // Clear password field on failed login
             passwordInput.value = '';
             passwordInput.focus();
         }
     } catch (error) {
         console.error('Login error:', error);
-        if (typeof notify !== 'undefined') {
-            notify.error('Network error. Please try again.');
-        } else {
-            alert('Network error. Please try again.');
-        }
+        const msg = 'Network error. Please try again.';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
 });
 
-// Enter key support
 passwordInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
+        e.preventDefault();
         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
 });
@@ -329,7 +358,6 @@ matricInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Initialize
 setupPasswordToggle();
 </script>
 {% endblock %}

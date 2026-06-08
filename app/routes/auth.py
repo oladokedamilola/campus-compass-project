@@ -4,21 +4,27 @@ Matric Number-based Authentication System
 Students verify with matric number first, then create password
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db
+from flask_wtf.csrf import generate_csrf
+from app import db, csrf
 from app.models import User, StudentUniversity, PasswordResetRequest
 import re
 from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/csrf-token', methods=['GET'])
+def get_csrf_token():
+    """Return a fresh CSRF token for AJAX requests"""
+    from flask_wtf.csrf import generate_csrf
+    csrf_token = generate_csrf()
+    return jsonify({'csrf_token': csrf_token})
+
 def is_valid_matric_number(matric):
     """
-    Validate matric number format.
-    Accepts two formats:
-    1. YYYY + 5 digits (total 9 digits) where year is between 2000 and current year
-    2. Any 9 random digits (legacy or special format)
+    Validate student matric number format.
+    Accepts exactly 9 digits.
     """
     if not matric:
         return False
@@ -39,8 +45,19 @@ def is_valid_matric_number(matric):
         pass
     
     # If not a valid year format, still accept any 9-digit number
-    # This handles legacy matric numbers or special formats
     return True
+
+
+def is_valid_staff_id(staff_id):
+    """
+    Validate staff/admin ID format.
+    Accepts alphanumeric (letters and numbers) with length between 4-20 characters.
+    """
+    if not staff_id:
+        return False
+    
+    pattern = r'^[A-Za-z0-9]{4,20}$'
+    return bool(re.match(pattern, staff_id))
 
 
 @auth_bp.route('/verify-matric', methods=['GET'])
@@ -48,14 +65,29 @@ def verify_matric_page():
     """Page to verify matric number before registration"""
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
-    return render_template('verify_matric.html')
+    
+    from flask import make_response
+    response = make_response(render_template('verify_matric.html'))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
+# IMPORTANT: This is the POST endpoint for verification - MUST be exempt from CSRF
 @auth_bp.route('/verify-matric', methods=['POST'])
+@csrf.exempt
 def verify_matric():
     """Verify matric number against university database"""
     try:
         data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request. Please refresh and try again.'
+            }), 400
+        
         matric_number = data.get('matric_number', '').strip().upper()
         
         # Validation
@@ -65,7 +97,7 @@ def verify_matric():
                 'message': 'Please enter your matric number'
             }), 400
         
-        if not is_valid_matric_number(matric_number):
+        if len(matric_number) != 9 or not matric_number.isdigit():
             return jsonify({
                 'success': False,
                 'message': 'Invalid matric number format. Must be 9 digits.'
@@ -96,6 +128,7 @@ def verify_matric():
             }), 400
         
         # Store matric number in session for registration
+        session.permanent = True
         session['verified_matric'] = matric_number
         session['student_data'] = {
             'full_name': student_record.full_name,
@@ -104,6 +137,7 @@ def verify_matric():
             'department': student_record.department,
             'phone': student_record.phone
         }
+        session.modified = True
         
         return jsonify({
             'success': True,
@@ -112,6 +146,9 @@ def verify_matric():
         })
         
     except Exception as e:
+        print(f"Error in verify_matric: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'message': 'An error occurred. Please try again.'
@@ -123,12 +160,22 @@ def login_page():
     """Render login page"""
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
-    return render_template('login.html')
+    
+    # Create response object from rendered template
+    from flask import make_response
+    response = make_response(render_template('login.html'))
+    
+    # Prevent caching of the login page
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
 
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Process login with matric number and password"""
+    """Process login with matric number and password (students only)"""
     try:
         data = request.get_json()
         matric_number = data.get('matric_number', '').strip().upper()
@@ -177,6 +224,7 @@ def login():
         })
         
     except Exception as e:
+        print(f"Login error: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'An error occurred. Please try again.'
@@ -194,36 +242,56 @@ def staff_login_page():
     return render_template('staff_login.html')
 
 
+# IMPORTANT: Staff login needs CSRF protection for production, but exempt for testing
 @auth_bp.route('/staff-login', methods=['POST'])
+@csrf.exempt  # Temporarily exempt for testing
 def staff_login():
-    """Process staff/admin login with matric number and password"""
+    """Process staff/admin login with staff ID (alphanumeric) and password"""
     try:
         data = request.get_json()
-        matric_number = data.get('matric_number', '').strip().upper()
+        
+        # Debug logging
+        print(f"[DEBUG] Staff login request received")
+        print(f"[DEBUG] Request data: {data}")
+        
+        # Get staff_id (handle both field names)
+        staff_id = data.get('staff_id', '')
+        if not staff_id:
+            staff_id = data.get('matric_number', '')
+        
+        staff_id = staff_id.strip().upper()
         password = data.get('password', '')
         remember = data.get('remember', False)
         
+        print(f"[DEBUG] Staff ID: {staff_id}")
+        print(f"[DEBUG] Password length: {len(password)}")
+        
         # Validation
-        if not matric_number or not password:
+        if not staff_id or not password:
             return jsonify({
                 'success': False,
-                'message': 'Please enter both matric number and password'
+                'message': 'Please enter both staff ID and password'
             }), 400
         
-        if not is_valid_matric_number(matric_number):
+        if not is_valid_staff_id(staff_id):
             return jsonify({
                 'success': False,
-                'message': 'Invalid matric number format. Must be 9 digits.'
+                'message': 'Invalid staff ID format. Use 4-20 alphanumeric characters (e.g., ADMIN0001).'
             }), 400
         
-        # Find user by matric number
-        user = User.query.filter_by(matric_number=matric_number).first()
+        # Find user by matric_number (which stores staff ID for admin users)
+        user = User.query.filter_by(matric_number=staff_id).first()
+        
+        print(f"[DEBUG] User found: {user is not None}")
+        if user:
+            print(f"[DEBUG] User type: {user.user_type}")
+            print(f"[DEBUG] Is admin: {user.is_admin()}")
         
         # Check credentials
         if not user or not user.check_password(password):
             return jsonify({
                 'success': False,
-                'message': 'Invalid credentials'
+                'message': 'Invalid staff ID or password'
             }), 401
         
         # Check if account is active
@@ -252,6 +320,9 @@ def staff_login():
         })
         
     except Exception as e:
+        print(f"[ERROR] Staff login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'message': 'An error occurred. Please try again.'
@@ -269,7 +340,16 @@ def register_page():
         flash('Please verify your matric number first.', 'warning')
         return redirect(url_for('auth.verify_matric_page'))
     
-    return render_template('register.html')
+    # Create response object from rendered template
+    from flask import make_response
+    response = make_response(render_template('register.html'))
+    
+    # Prevent caching of the register page
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -296,7 +376,6 @@ def register():
         if not password:
             return jsonify({'success': False, 'message': 'Password is required'}), 400
         
-        # Password validation
         if len(password) < 6:
             return jsonify({'success': False, 'message': 'Password must be at least 6 characters long'}), 400
         
@@ -359,6 +438,8 @@ def register():
     except Exception as e:
         db.session.rollback()
         print(f"Registration error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'message': 'An error occurred during registration. Please try again.'
@@ -433,6 +514,7 @@ def forgot_password():
         
     except Exception as e:
         db.session.rollback()
+        print(f"Forgot password error: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'An error occurred. Please try again.'
@@ -445,37 +527,54 @@ def logout():
     """Log out user"""
     logout_user()
     flash('You have been successfully logged out.', 'info')
-    return redirect(url_for('main.index'))
+    # Redirect with a cache-busting timestamp parameter
+    from flask import make_response
+    response = redirect(url_for('auth.login_page', _external=True) + '?t=' + str(int(datetime.now().timestamp())))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
+# Public endpoint - Exempt from CSRF
 @auth_bp.route('/check-matric', methods=['POST'])
+@csrf.exempt
 def check_matric():
     """Check if matric number exists in university database (for real-time validation)"""
     try:
         data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'exists': False,
+                'is_registered': False,
+                'is_graduated': False,
+                'message': 'Invalid request. Please refresh and try again.'
+            }), 200
+        
         matric = data.get('matric_number', '').strip().upper()
         
-        if not matric or len(matric) < 9:
+        if not matric:
             return jsonify({
-                'exists': False, 
+                'exists': False,
                 'is_registered': False,
                 'is_graduated': False,
                 'message': ''
             }), 200
         
-        # First validate format
-        if not is_valid_matric_number(matric):
+        # Check length
+        if len(matric) != 9 or not matric.isdigit():
             return jsonify({
                 'exists': False,
                 'is_registered': False,
                 'is_graduated': False,
-                'message': 'Invalid format. Must be 9 digits.'
+                'message': 'Matric number must be exactly 9 digits.'
             }), 200
         
+        # Check in database
         student = StudentUniversity.query.filter_by(matric_number=matric).first()
         
         if student:
-            # Check if student is graduated/inactive
             if not student.is_active:
                 return jsonify({
                     'exists': False,
@@ -484,7 +583,6 @@ def check_matric():
                     'message': student.status_note or 'You have graduated from LASU. Campus Compass is for current students only.'
                 }), 200
             
-            # Active student
             user = User.query.filter_by(matric_number=matric).first()
             if user:
                 return jsonify({
@@ -493,6 +591,7 @@ def check_matric():
                     'is_graduated': False,
                     'message': 'Already registered. Please login instead.'
                 }), 200
+            
             return jsonify({
                 'exists': True,
                 'is_registered': False,
@@ -505,14 +604,16 @@ def check_matric():
                 'exists': False,
                 'is_registered': False,
                 'is_graduated': False,
-                'message': 'Matric number not found'
+                'message': 'Matric number not found in LASU records.'
             }), 200
         
     except Exception as e:
         print(f"Error in check_matric: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'exists': False,
             'is_registered': False,
             'is_graduated': False,
-            'message': 'Error verifying matric number'
+            'message': 'Error verifying matric number. Please try again.'
         }), 200

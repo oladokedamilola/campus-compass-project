@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Matric Verification</title>
+</head>
+<body>
+    <h2>Test Matric Verification</h2>
+    <input type="text" id="matric" placeholder="Enter matric number">
+    <button onclick="testMatric()">Check</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testMatric() {
+            const matric = document.getElementById('matric').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = 'Sending request...';
+            
+            try {
+                const response = await fetch('/auth/check-matric', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ matric_number: matric })
+                });
+                
+                const text = await response.text();
+                resultDiv.innerHTML = `Status: ${response.status}\nResponse: ${text}`;
+                
+                try {
+                    const json = JSON.parse(text);
+                    resultDiv.innerHTML += `\n\nParsed JSON:\n${JSON.stringify(json, null, 2)}`;
+                } catch(e) {}
+                
+            } catch(error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

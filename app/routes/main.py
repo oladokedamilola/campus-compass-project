@@ -45,3 +45,8 @@ def api_buildings():
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@main_bp.route('/test-matric')
+def test_matric():
+    return render_template('test_matric.html')

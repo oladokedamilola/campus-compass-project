@@ -3,13 +3,14 @@ Campus Compass - Flask Application Factory
 Initializes the app, database, login manager, and registers blueprints
 """
 
-from flask import Flask, send_from_directory, render_template, redirect, url_for
+from flask import Flask, send_from_directory, render_template, redirect, url_for, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate  # ADD THIS IMPORT
+from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
+from datetime import timedelta
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +19,7 @@ load_dotenv()
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-migrate = Migrate()  # ADD THIS
+migrate = Migrate()
 
 def create_app():
     """Application factory pattern"""
@@ -29,10 +30,12 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///campus.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Session configuration
-    app.config['SESSION_COOKIE_SECURE'] = False
+    # Session configuration - FIXED for better persistence
+    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+    app.config['SESSION_PERMANENT'] = True
     
     # PWA: Ensure proper MIME types
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
@@ -41,10 +44,17 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    migrate.init_app(app, db)  # ADD THIS - Initialize Flask-Migrate
+    migrate.init_app(app, db)
+    
+    # Configure CSRF - EXEMPT public API endpoints properly
+    @app.after_request
+    def after_request(response):
+        """Ensure session is saved"""
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        return response
     
     # Configure login
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = 'auth.login_page'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'warning'
     
@@ -62,7 +72,6 @@ def create_app():
     @app.route('/static/campus-images/<path:filename>')
     def serve_campus_images(filename):
         """Serve images from the campus-images folder"""
-        # Get the absolute path to the campus-images folder
         campus_images_path = os.path.join(app.root_path, 'static', 'campus-images')
         return send_from_directory(campus_images_path, filename)
     
@@ -80,7 +89,6 @@ def create_app():
     app.register_blueprint(map_bp, url_prefix='/map')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(upload_bp, url_prefix='/upload')
-
     
     # PWA: Serve service worker from root
     @app.route('/sw.js')
@@ -99,7 +107,6 @@ def create_app():
     def offline():
         """Offline fallback page for PWA"""
         return render_template('offline.html')
-
 
     # Error handlers
     @app.errorhandler(404)

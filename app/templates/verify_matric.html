@@ -17,8 +17,6 @@
             </div>
             
             <form id="verifyForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
                 <div class="mb-4">
                     <label for="matric_number" class="form-label text-white">Matric Number</label>
                     <div class="input-group">
@@ -29,7 +27,7 @@
                                class="form-control form-control-campus border-start-0" 
                                id="matric_number" 
                                name="matric_number" 
-                               placeholder="e.g., 202167921" 
+                               placeholder="e.g., 200591097" 
                                maxlength="9"
                                pattern="\d{9}"
                                inputmode="numeric"
@@ -159,16 +157,11 @@
 let isMatricValid = false;
 let matricTimeout;
 let graduatedRedirectTimer = null;
+let isSubmitting = false; // Prevent duplicate submissions
 
 const matricInput = document.getElementById('matric_number');
 const matricCheck = document.getElementById('matricCheck');
 const verifyBtn = document.getElementById('verifyBtn');
-
-// Function to get CSRF token
-function getCsrfToken() {
-    const tokenElement = document.querySelector('[name=csrf_token]');
-    return tokenElement ? tokenElement.value : '';
-}
 
 // Function to validate matric number format (exactly 9 digits)
 function isValidMatricFormat(value) {
@@ -223,25 +216,25 @@ matricInput.addEventListener('input', (e) => {
     // Remove previous validation styling
     matricInput.classList.remove('valid', 'invalid');
     
+    // Reset valid flag
+    isMatricValid = false;
+    
     // Check if we have exactly 9 digits
     const isValidFormat = isValidMatricFormat(matric);
     
     // Handle empty or incomplete input
     if (matric.length === 0) {
         matricCheck.innerHTML = '';
-        isMatricValid = false;
         return;
     }
     
     if (matric.length < 9) {
         matricCheck.innerHTML = '<span style="color: #FFD600;">⚠️ Matric number must be exactly 9 digits (currently ' + matric.length + '/9)</span>';
-        isMatricValid = false;
         return;
     }
     
     if (!isValidFormat) {
         matricCheck.innerHTML = '<span style="color: #FF1744;">❌ Invalid format. Please enter exactly 9 digits.</span>';
-        isMatricValid = false;
         return;
     }
     
@@ -255,22 +248,21 @@ matricInput.addEventListener('input', (e) => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ matric_number: matric })
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const result = await response.json();
             console.log('Check result:', result);
             
             // Check if student is graduated (inactive with graduation note)
-            if (result.is_graduated === true || (result.exists === false && result.message && result.message.includes('inactive'))) {
+            if (result.is_graduated === true) {
                 showGraduatedModal();
-                isMatricValid = false;
                 matricCheck.innerHTML = '';
                 matricInput.classList.remove('valid');
                 return;
@@ -298,12 +290,18 @@ matricInput.addEventListener('input', (e) => {
             matricInput.classList.remove('valid');
             matricInput.classList.add('invalid');
         }
-    }, 500);
+    }, 500); // Debounce delay
 });
 
 // Form submission
 document.getElementById('verifyForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+        console.log('Submission already in progress');
+        return;
+    }
     
     // Don't submit if already showing graduated modal
     if (graduatedRedirectTimer) return;
@@ -312,33 +310,39 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
     
     // Frontend validation before submission
     if (!matric) {
+        const errorMsg = 'Please enter your matric number';
         if (typeof notify !== 'undefined') {
-            notify.error('Please enter your matric number');
+            notify.error(errorMsg);
         } else {
-            alert('Please enter your matric number');
+            alert(errorMsg);
         }
+        matricInput.focus();
         return;
     }
     
     if (!isValidMatricFormat(matric)) {
+        const errorMsg = 'Matric number must be exactly 9 digits';
         if (typeof notify !== 'undefined') {
-            notify.error('Matric number must be exactly 9 digits');
+            notify.error(errorMsg);
         } else {
-            alert('Matric number must be exactly 9 digits');
+            alert(errorMsg);
         }
+        matricInput.focus();
         return;
     }
     
     if (!isMatricValid) {
+        const errorMsg = 'Please wait for matric number verification to complete';
         if (typeof notify !== 'undefined') {
-            notify.error('Please enter a valid LASU matric number');
+            notify.error(errorMsg);
         } else {
-            alert('Please enter a valid LASU matric number');
+            alert(errorMsg);
         }
         return;
     }
     
-    // Disable button and show loading
+    // Set submitting flag and disable button
+    isSubmitting = true;
     const originalText = verifyBtn.innerHTML;
     verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
     verifyBtn.disabled = true;
@@ -348,23 +352,34 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ matric_number: matric })
         });
         
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server error: ${response.status}`);
+        }
+        
         const result = await response.json();
+        console.log('Verify result:', result);
         
         if (result.success) {
+            // Show success message
             if (typeof notify !== 'undefined') {
                 notify.success(result.message);
             }
+            // Redirect after short delay
             setTimeout(() => {
                 window.location.href = result.redirect;
-            }, 500);
+            }, 1000);
         } else {
-            // Check if it's a graduated student response
-            if (result.message && (result.message.includes('inactive') || result.message.includes('graduated'))) {
+            // Handle different error cases
+            if (result.message && (result.message.toLowerCase().includes('inactive') || 
+                                   result.message.toLowerCase().includes('graduated'))) {
                 showGraduatedModal();
             } else {
                 if (typeof notify !== 'undefined') {
@@ -373,29 +388,46 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
                     alert(result.message);
                 }
             }
-            if (result.redirect && result.message.includes('already registered')) {
+            
+            // If already registered, redirect to login page
+            if (result.redirect && result.message && result.message.toLowerCase().includes('already registered')) {
                 setTimeout(() => {
                     window.location.href = result.redirect;
                 }, 2000);
+            } else {
+                // Re-enable button for retry
+                verifyBtn.innerHTML = originalText;
+                verifyBtn.disabled = false;
+                isSubmitting = false;
+                
+                // Clear the invalid state and allow retry
+                isMatricValid = false;
+                matricInput.classList.remove('valid');
+                if (!result.message || !result.message.toLowerCase().includes('already registered')) {
+                    matricInput.focus();
+                }
             }
         }
     } catch (error) {
         console.error('Verification error:', error);
+        const errorMsg = error.message.includes('Server error') 
+            ? 'Server error. Please try again later.' 
+            : 'Network error. Please check your connection and try again.';
+        
         if (typeof notify !== 'undefined') {
-            notify.error('Network error. Please try again.');
+            notify.error(errorMsg);
         } else {
-            alert('Network error. Please try again.');
+            alert(errorMsg);
         }
-    } finally {
-        // Restore button if not redirecting
-        if (!graduatedRedirectTimer) {
-            verifyBtn.innerHTML = originalText;
-            verifyBtn.disabled = false;
-        }
+        
+        // Re-enable button
+        verifyBtn.innerHTML = originalText;
+        verifyBtn.disabled = false;
+        isSubmitting = false;
     }
 });
 
-// Optional: Add paste event handler to clean pasted content
+// Paste event handler to clean pasted content
 matricInput.addEventListener('paste', (e) => {
     e.preventDefault();
     const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -405,6 +437,36 @@ matricInput.addEventListener('paste', (e) => {
     // Trigger input event to run validation
     const inputEvent = new Event('input', { bubbles: true });
     matricInput.dispatchEvent(inputEvent);
+});
+
+// Enter key support
+matricInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        // Only submit if matric is valid
+        if (isMatricValid && !isSubmitting) {
+            document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+        }
+    }
+});
+
+// Focus event - clear any lingering error states
+matricInput.addEventListener('focus', () => {
+    if (matricInput.value.length === 9 && !isMatricValid) {
+        // Re-trigger validation on focus if there's a value
+        const inputEvent = new Event('input', { bubbles: true });
+        matricInput.dispatchEvent(inputEvent);
+    }
+});
+
+// Clean up on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    if (matricTimeout) {
+        clearTimeout(matricTimeout);
+    }
+    if (graduatedRedirectTimer) {
+        clearTimeout(graduatedRedirectTimer);
+    }
 });
 </script>
 

@@ -20,14 +20,21 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="mb-3">
-                    <label for="matric_number" class="form-label text-white">Staff ID</label>
+                    <label for="staff_id" class="form-label text-white">Staff ID</label>
                     <div class="input-group">
                         <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--campus-gray-600);">
                             <i class="fas fa-id-badge" style="color: var(--campus-gray-500);"></i>
                         </span>
                         <input type="text" class="form-control form-control-campus border-start-0" 
-                               id="matric_number" name="matric_number" placeholder="e.g., ADMIN001" required>
+                               id="staff_id" name="staff_id" 
+                               placeholder="e.g., ADMIN0001" 
+                               maxlength="20"
+                               required>
                     </div>
+                    <small class="text-white-50 mt-1 d-block">
+                        <i class="fas fa-info-circle me-1"></i>Enter your staff ID (4-20 alphanumeric characters)
+                    </small>
+                    <div id="staffIdError" class="small mt-1" style="color: #FF1744; display: none;"></div>
                 </div>
                 
                 <div class="mb-3">
@@ -80,6 +87,12 @@
 
 {% block extra_js %}
 <script>
+// Validate staff ID (alphanumeric, 4-20 characters)
+function isValidStaffId(value) {
+    const staffIdRegex = /^[A-Za-z0-9]{4,20}$/;
+    return staffIdRegex.test(value);
+}
+
 // Setup password toggle
 function setupPasswordToggle() {
     const toggleButtons = document.querySelectorAll('.toggle-password');
@@ -102,69 +115,126 @@ function setupPasswordToggle() {
     });
 }
 
-// Form submission
+// Get CSRF token - FIXED: More robust method
+function getCsrfToken() {
+    // First try to get from meta tag
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    // Fallback: try to get from hidden input
+    const tokenInput = document.querySelector('input[name="csrf_token"]');
+    if (tokenInput) {
+        return tokenInput.value;
+    }
+    
+    console.warn('CSRF token not found');
+    return '';
+}
+
+// Real-time staff ID validation
+const staffIdInput = document.getElementById('staff_id');
+const staffIdError = document.getElementById('staffIdError');
+
+if (staffIdInput) {
+    staffIdInput.addEventListener('input', function(e) {
+        let value = this.value.trim().toUpperCase();
+        this.value = value;
+        
+        staffIdError.style.display = 'none';
+        
+        if (value.length > 0 && value.length < 4) {
+            staffIdError.innerHTML = '<i class="fas fa-info-circle"></i> Staff ID must be at least 4 characters';
+            staffIdError.style.display = 'block';
+        } else if (value.length > 20) {
+            this.value = value.slice(0, 20);
+        } else if (value.length >= 4 && !isValidStaffId(value)) {
+            staffIdError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Use only letters and numbers (no spaces or special characters)';
+            staffIdError.style.display = 'block';
+        }
+    });
+}
+
+// Form submission - FIXED: Proper CSRF handling
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const btn = document.getElementById('loginBtn');
     const originalText = btn.innerHTML;
     
+    // Get values
+    const staffId = document.getElementById('staff_id').value.trim().toUpperCase();
+    const password = document.getElementById('password').value;
+    const remember = document.getElementById('remember').checked;
+    
+    // Validate
+    if (!staffId) {
+        const msg = 'Please enter your staff ID';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
+        return;
+    }
+    
+    if (!isValidStaffId(staffId)) {
+        const msg = 'Invalid staff ID format. Use 4-20 alphanumeric characters.';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
+        return;
+    }
+    
+    if (!password) {
+        const msg = 'Please enter your password';
+        if (typeof notify !== 'undefined') notify.error(msg);
+        else alert(msg);
+        return;
+    }
+    
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Authenticating...';
     btn.disabled = true;
     
+    // Prepare data
     const data = {
-        matric_number: document.getElementById('matric_number').value.trim().toUpperCase(),
-        password: document.getElementById('password').value,
-        remember: document.getElementById('remember').checked
+        staff_id: staffId,
+        password: password,
+        remember: remember
     };
     
-    if (!data.matric_number || !data.password) {
-        if (typeof notify !== 'undefined') {
-            notify.error('Please fill in all fields');
-        } else {
-            alert('Please fill in all fields');
-        }
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        return;
-    }
+    console.log('Sending login request for staff ID:', staffId);
+    
+    // Get CSRF token
+    const csrfToken = getCsrfToken();
+    console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
     
     try {
         const response = await fetch('/auth/staff-login', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+                'X-CSRFToken': csrfToken  // Include CSRF token here
             },
             body: JSON.stringify(data)
         });
         
         const result = await response.json();
+        console.log('Login response:', result);
         
         if (result.success) {
-            if (typeof notify !== 'undefined') {
-                notify.success(result.message);
-            }
+            if (typeof notify !== 'undefined') notify.success(result.message);
             setTimeout(() => {
                 window.location.href = result.redirect;
             }, 500);
         } else {
-            if (typeof notify !== 'undefined') {
-                notify.error(result.message);
-            } else {
-                alert(result.message);
-            }
+            if (typeof notify !== 'undefined') notify.error(result.message);
+            else alert(result.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
             document.getElementById('password').value = '';
         }
     } catch (error) {
         console.error('Login error:', error);
-        if (typeof notify !== 'undefined') {
-            notify.error('Network error. Please try again.');
-        } else {
-            alert('Network error. Please try again.');
-        }
+        if (typeof notify !== 'undefined') notify.error('Network error. Please try again.');
+        else alert('Network error. Please try again.');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }

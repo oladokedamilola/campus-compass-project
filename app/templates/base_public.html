@@ -8,6 +8,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Campus Compass">
+
+
+    <!-- Prevent page caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- CSRF Token Meta Tag - CRITICAL for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Debug: CSRF token exists: {{ csrf_token() if csrf_token() else 'NOT FOUND' }} -->
+    
     <title>Campus Compass - {% block title %}{% endblock %}</title>
     
     <!-- Bootstrap 5 CSS -->
@@ -62,52 +73,53 @@
             </div>
         </div>
     </div>
+    
     <!-- PWA Install Prompt -->
-<div id="pwaInstallPrompt" class="position-fixed bottom-0 start-0 w-100 p-3" style="z-index: 9998; display: none;">
-    <div class="campus-glass-card p-4" style="border-radius: 16px; border: 1px solid var(--campus-accent);">
-        <div class="d-flex align-items-start gap-3">
-            <div class="flex-shrink-0">
-                <div class="rounded-circle p-2" style="background: var(--campus-accent-soft);">
-                    <i class="fas fa-download fa-2x" style="color: var(--campus-accent);"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1">
-                <h5 class="fw-bold mb-1">Install Campus Compass</h5>
-                <p class="small text-white-50 mb-2">Get faster access and navigate offline</p>
-                <div class="d-flex gap-3 mb-2">
-                    <div class="d-flex align-items-center gap-1">
-                        <i class="fas fa-rocket fa-sm" style="color: var(--campus-accent);"></i>
-                        <small class="text-white-50">Lightning Fast</small>
-                    </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <i class="fas fa-wifi fa-sm" style="color: var(--campus-accent);"></i>
-                        <small class="text-white-50">Works Offline</small>
-                    </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <i class="fas fa-home fa-sm" style="color: var(--campus-accent);"></i>
-                        <small class="text-white-50">Home Screen</small>
+    <div id="pwaInstallPrompt" class="position-fixed bottom-0 start-0 w-100 p-3" style="z-index: 9998; display: none;">
+        <div class="campus-glass-card p-4" style="border-radius: 16px; border: 1px solid var(--campus-accent);">
+            <div class="d-flex align-items-start gap-3">
+                <div class="flex-shrink-0">
+                    <div class="rounded-circle p-2" style="background: var(--campus-accent-soft);">
+                        <i class="fas fa-download fa-2x" style="color: var(--campus-accent);"></i>
                     </div>
                 </div>
+                <div class="flex-grow-1">
+                    <h5 class="fw-bold mb-1">Install Campus Compass</h5>
+                    <p class="small text-white-50 mb-2">Get faster access and navigate offline</p>
+                    <div class="d-flex gap-3 mb-2">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fas fa-rocket fa-sm" style="color: var(--campus-accent);"></i>
+                            <small class="text-white-50">Lightning Fast</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fas fa-wifi fa-sm" style="color: var(--campus-accent);"></i>
+                            <small class="text-white-50">Works Offline</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fas fa-home fa-sm" style="color: var(--campus-accent);"></i>
+                            <small class="text-white-50">Home Screen</small>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button id="closePwaPrompt" class="btn btn-sm" style="color: var(--campus-gray-500);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-            <div>
-                <button id="closePwaPrompt" class="btn btn-sm" style="color: var(--campus-gray-500);">
-                    <i class="fas fa-times"></i>
+            <div class="d-flex gap-2 mt-3">
+                <button id="installPwaBtn" class="btn btn-campus-accent flex-grow-1 py-2">
+                    <i class="fas fa-download me-2"></i>Install Now
+                </button>
+                <button id="laterPwaBtn" class="btn btn-campus-outline-light px-3">
+                    Later
                 </button>
             </div>
+            <p class="small text-white-50 text-center mt-2 mb-0">
+                <i class="fas fa-shield-alt me-1"></i> No app store required
+            </p>
         </div>
-        <div class="d-flex gap-2 mt-3">
-            <button id="installPwaBtn" class="btn btn-campus-accent flex-grow-1 py-2">
-                <i class="fas fa-download me-2"></i>Install Now
-            </button>
-            <button id="laterPwaBtn" class="btn btn-campus-outline-light px-3">
-                Later
-            </button>
-        </div>
-        <p class="small text-white-50 text-center mt-2 mb-0">
-            <i class="fas fa-shield-alt me-1"></i> No app store required
-        </p>
     </div>
-</div>
     
     <!-- Flash Messages Container (Fixed Top Center) -->
     <div id="flash-container" class="flash-container"></div>
@@ -143,15 +155,15 @@
                 {% endif %}
                 <li class="mobile-drawer-divider"></li>
                 <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                {% else %}
-                    <!-- Guest menu -->
-                    <li><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="{{ url_for('map.public_map') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
-                    <li><a href="{{ url_for('main.public_locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
-                    <li class="mobile-drawer-divider"></li>
-                    <li><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                    <li><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
-                {% endif %}
+            {% else %}
+                <!-- Guest menu -->
+                <li><a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="{{ url_for('map.public_map') }}"><i class="fas fa-map-marked-alt"></i> Campus Map</a></li>
+                <li><a href="{{ url_for('main.public_locations') }}"><i class="fas fa-building"></i> All Locations</a></li>
+                <li class="mobile-drawer-divider"></li>
+                <li><a href="{{ url_for('auth.login_page') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                <li><a href="{{ url_for('auth.verify_matric_page') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+            {% endif %}
         </ul>
         <div class="mobile-drawer-footer">
             <div class="mobile-drawer-version">
@@ -209,7 +221,6 @@
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>
                     </a>
-               
                 {% else %}
                     <!-- Guest desktop menu -->
                     <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -265,6 +276,64 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    
+    <!-- Global CSRF Helper Function -->
+    <script>
+        // Handle logout with cache prevention
+        document.querySelectorAll('.logout-link, a[href*="logout"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const logoutUrl = this.getAttribute('href');
+                fetch(logoutUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                }).then(() => {
+                    // Force a complete page reload without cache
+                    window.location.href = '/auth/login?nocache=' + Date.now();
+                });
+            });
+        });
+
+
+        // Global CSRF token helper for AJAX requests
+        function getCsrfToken() {
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                return metaTag.getAttribute('content');
+            }
+            // Fallback: try to get from hidden input
+            const hiddenInput = document.querySelector('input[name="csrf_token"]');
+            if (hiddenInput) {
+                return hiddenInput.value;
+            }
+            console.warn('CSRF token not found');
+            return '';
+        }
+        
+        // Auto-include CSRF token in all fetch requests that need it
+        // Note: This doesn't affect the public verify endpoints since they're exempt
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            // Only add CSRF token for same-origin requests that are not GET/HEAD/OPTIONS
+            // and are not the public verify endpoints
+            const shouldAddCsrf = options.method && 
+                                 !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase()) &&
+                                 !url.includes('/auth/check-matric') &&
+                                 !url.includes('/auth/verify-matric');
+            
+            if (shouldAddCsrf) {
+                const csrfToken = getCsrfToken();
+                if (csrfToken) {
+                    options.headers = options.headers || {};
+                    options.headers['X-CSRFToken'] = csrfToken;
+                }
+            }
+            
+            return originalFetch.call(this, url, options);
+        };
+    </script>
     
     <!-- Mobile Menu JS -->
     <script>

@@ -20,7 +20,7 @@ def seed_admin():
     
     with app.app_context():
         # Check if admin already exists (using matric number as identifier)
-        admin_matric = 'ADMIN001'
+        admin_matric = 'ADMIN0001'
         existing_admin = User.query.filter_by(matric_number=admin_matric).first()
         
         if existing_admin:
