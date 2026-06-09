@@ -1,6 +1,3 @@
-Here's the updated README file for your Campus Compass project with links to screenshots:
-
-```markdown
 # Campus Compass
 
 A Progressive Web App (PWA) for campus navigation at Lagos State University (LASU), Ojo Campus.
